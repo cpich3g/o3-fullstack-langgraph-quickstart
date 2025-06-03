@@ -28,6 +28,7 @@ from agent.utils import (
     insert_citation_markers,
     resolve_urls,
 )
+from agent.web_research import enhance_ai_research_with_real_data
 
 load_dotenv()
 
@@ -60,7 +61,7 @@ def generate_query(state: OverallState, config: RunnableConfig) -> QueryGenerati
         model=configurable.query_generator_model,
         messages=[{"role": "system", "content": formatted_prompt}],
         # temperature=1.0,
-        max_tokens=256,
+        # max_tokens=256,
     )
     # Parse output (assuming output is a JSON list of queries)
     import json
@@ -82,29 +83,52 @@ def continue_to_web_research(state: QueryGenerationState):
     ]
 
 
-def web_research(state: WebSearchState, config: RunnableConfig) -> OverallState:
-    """LangGraph node that performs web research using Azure OpenAI o3 model (no Google Search API)."""
+async def web_research(state: WebSearchState, config: RunnableConfig) -> OverallState:
+    """LangGraph node that performs web research using Azure OpenAI with optional SerpAPI enhancement."""
     configurable = Configuration.from_runnable_config(config)
     formatted_prompt = web_searcher_instructions.format(
         current_date=get_current_date(),
         research_topic=state["search_query"],
     )
-    # Call Azure OpenAI o3 model for web research
+    
+    # Call Azure OpenAI o3 model for initial web research
     completion = openai_client.chat.completions.create(
         model=configurable.query_generator_model,
         messages=[{"role": "system", "content": formatted_prompt}],
         # temperature=0,
-        max_tokens=1024,
+        # max_tokens=1024,
     )
-    text = completion.choices[0].message.content
-    # Dummy citation logic (replace with your own if needed)
-    citations = []
-    modified_text = text
+    ai_generated_text = completion.choices[0].message.content
+    
+    # Enhance with real web data if SerpAPI is available and enabled
     sources_gathered = []
+    if configurable.use_web_research:
+        try:
+            enhanced_result = await enhance_ai_research_with_real_data(
+                state["search_query"], 
+                ai_generated_text
+            )
+            final_text = enhanced_result["enhanced_content"]
+            
+            # Convert sources to the expected format
+            for source in enhanced_result["sources"]:
+                sources_gathered.append({
+                    "label": source["title"][:50] + "..." if len(source["title"]) > 50 else source["title"],
+                    "short_url": source["url"],
+                    "value": source["url"],
+                    "snippet": source["snippet"],
+                    "scraped_successfully": source.get("scraped_successfully", False)
+                })
+        except Exception as e:
+            print(f"Error enhancing web research: {e}")
+            final_text = ai_generated_text
+    else:
+        final_text = ai_generated_text
+    
     return {
         "sources_gathered": sources_gathered,
         "search_query": [state["search_query"]],
-        "web_research_result": [modified_text],
+        "web_research_result": [final_text],
     }
 
 
@@ -123,7 +147,7 @@ def reflection(state: OverallState, config: RunnableConfig) -> ReflectionState:
         model=reasoning_model,
         messages=[{"role": "system", "content": formatted_prompt}],
         # temperature=1.0,
-        max_tokens=512,
+        max_completion_tokens=50000,
     )
     import json
     try:
@@ -165,7 +189,10 @@ def evaluate_research(
         if state.get("max_research_loops") is not None
         else configurable.max_research_loops
     )
-    if state["is_sufficient"] or state["research_loop_count"] >= max_research_loops:
+    
+    if (state["is_sufficient"] or 
+        state["research_loop_count"] >= max_research_loops or
+        (not state["is_sufficient"] and not state["follow_up_queries"])):
         return "finalize_answer"
     else:
         return [
@@ -194,16 +221,47 @@ def finalize_answer(state: OverallState, config: RunnableConfig):
         model=reasoning_model,
         messages=[{"role": "system", "content": formatted_prompt}],
         # temperature=0,
-        max_tokens=1024,
+        # max_tokens=1024,
     )
     content = completion.choices[0].message.content
     unique_sources = []
     for source in state["sources_gathered"]:
         if source.get("short_url") and source["short_url"] in content:
             content = content.replace(source["short_url"], source["value"])
-            unique_sources.append(source)
+            unique_sources.append(source)      # Create research steps for frontend display
+    research_steps = []
+    search_queries = state.get("search_query", [])
+    
+    for i, query in enumerate(search_queries, 1):
+        research_steps.append({
+            "step": i,
+            "type": "search",
+            "description": f"Searched for: {query}",
+            "status": "completed"
+        })
+    
+    # Add analysis step
+    if search_queries:
+        research_steps.append({
+            "step": len(search_queries) + 1,
+            "type": "analysis",
+            "description": "Analyzed and synthesized information from sources",
+            "status": "completed"
+        })
+    
+      # Create structured message with content as string and metadata in additional_kwargs
+    structured_data = {
+        "sources": unique_sources,
+        "research_summary": {
+            "total_queries": len(state.get("search_query", [])),
+            "research_loops": state.get("research_loop_count", 0),
+            "sources_found": len(unique_sources),
+            "research_steps": research_steps
+        }
+    }
+    
     return {
-        "messages": [AIMessage(content=content)],
+        "messages": [AIMessage(content=content, additional_kwargs=structured_data)],
         "sources_gathered": unique_sources,
     }
 

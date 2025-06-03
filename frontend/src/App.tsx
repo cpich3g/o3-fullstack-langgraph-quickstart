@@ -25,38 +25,76 @@ export default function App() {
       ? "http://localhost:2024"
       : "http://localhost:8123",
     assistantId: "agent",
-    messagesKey: "messages",
+    messagesKey: "messages",    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     onFinish: (event: any) => {
       console.log(event);
     },
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     onUpdateEvent: (event: any) => {
+      console.log("Event received:", event); // Debug log to understand actual structure
       let processedEvent: ProcessedEvent | null = null;
+      
+      // The generate_query node in LangGraph returns { query_list: [...] }
+      // So the event structure should be { generate_query: { query_list: [...] } }
       if (event.generate_query) {
+        // Access query_list from the generate_query node result
+        const nodeOutput = event.generate_query;
+        const queryList = nodeOutput.query_list || nodeOutput; // Fallback to nodeOutput itself
+        let queryData = "Generating search queries...";
+        
+        if (Array.isArray(queryList)) {
+          queryData = queryList.join(", ");
+        } else if (typeof queryList === 'string') {
+          queryData = queryList;
+        } else if (queryList && typeof queryList === 'object' && queryList.query_list) {
+          // If the structure is nested differently
+          const nestedList = queryList.query_list;
+          if (Array.isArray(nestedList)) {
+            queryData = nestedList.join(", ");
+          } else {
+            queryData = String(nestedList);
+          }
+        } else if (queryList) {
+          queryData = String(queryList);
+        }
+        
         processedEvent = {
           title: "Generating Search Queries",
-          data: event.generate_query.query_list.join(", "),
+          data: queryData,
         };
       } else if (event.web_research) {
         const sources = event.web_research.sources_gathered || [];
         const numSources = sources.length;
         const uniqueLabels = [
-          ...new Set(sources.map((s: any) => s.label).filter(Boolean)),
+          ...new Set(sources.map((s: {label?: string}) => s.label).filter(Boolean)),
         ];
         const exampleLabels = uniqueLabels.slice(0, 3).join(", ");
+        const scrapedCount = sources.filter((s: {scraped_successfully?: boolean}) => s.scraped_successfully).length;
+        
         processedEvent = {
           title: "Web Research",
-          data: `Gathered ${numSources} sources. Related to: ${
-            exampleLabels || "N/A"
-          }.`,
-        };
-      } else if (event.reflection) {
+          data: numSources > 0 
+            ? `Found ${numSources} sources${scrapedCount > 0 ? ` (${scrapedCount} analyzed)` : ''}. Related to: ${exampleLabels || "N/A"}.`
+            : "AI-based research (no external sources)",
+        };      } else if (event.reflection) {
+        let reflectionData = "Reflecting on research results...";
+        
+        if (event.reflection.is_sufficient) {
+          reflectionData = "Search successful, generating final answer.";
+        } else {
+          const followUpQueries = event.reflection.follow_up_queries;
+          if (Array.isArray(followUpQueries)) {
+            reflectionData = `Need more information, searching for ${followUpQueries.join(", ")}`;
+          } else if (typeof followUpQueries === 'string') {
+            reflectionData = `Need more information, searching for ${followUpQueries}`;
+          } else {
+            reflectionData = "Need more information, continuing research...";
+          }
+        }
+        
         processedEvent = {
           title: "Reflection",
-          data: event.reflection.is_sufficient
-            ? "Search successful, generating final answer."
-            : `Need more information, searching for ${event.reflection.follow_up_queries.join(
-                ", "
-              )}`,
+          data: reflectionData,
         };
       } else if (event.finalize_answer) {
         processedEvent = {
@@ -150,34 +188,28 @@ export default function App() {
   const handleCancel = useCallback(() => {
     thread.stop();
     window.location.reload();
-  }, [thread]);
-
-  return (
-    <div className="flex h-screen bg-neutral-800 text-neutral-100 font-sans antialiased">
-      <main className="flex-1 flex flex-col overflow-hidden max-w-4xl mx-auto w-full">
-        <div
-          className={`flex-1 overflow-y-auto ${
-            thread.messages.length === 0 ? "flex" : ""
-          }`}
-        >
-          {thread.messages.length === 0 ? (
+  }, [thread]);  return (
+    <div className="fixed inset-0 bg-gradient-to-br from-neutral-900 via-neutral-800 to-neutral-900 text-neutral-100 font-sans antialiased">
+      <main className="flex flex-col h-full max-w-6xl mx-auto">
+        {thread.messages.length === 0 ? (
+          <div className="flex flex-col h-full">
             <WelcomeScreen
               handleSubmit={handleSubmit}
               isLoading={thread.isLoading}
               onCancel={handleCancel}
             />
-          ) : (
-            <ChatMessagesView
-              messages={thread.messages}
-              isLoading={thread.isLoading}
-              scrollAreaRef={scrollAreaRef}
-              onSubmit={handleSubmit}
-              onCancel={handleCancel}
-              liveActivityEvents={processedEventsTimeline}
-              historicalActivities={historicalActivities}
-            />
-          )}
-        </div>
+          </div>
+        ) : (
+          <ChatMessagesView
+            messages={thread.messages}
+            isLoading={thread.isLoading}
+            scrollAreaRef={scrollAreaRef}
+            onSubmit={handleSubmit}
+            onCancel={handleCancel}
+            liveActivityEvents={processedEventsTimeline}
+            historicalActivities={historicalActivities}
+          />
+        )}
       </main>
     </div>
   );

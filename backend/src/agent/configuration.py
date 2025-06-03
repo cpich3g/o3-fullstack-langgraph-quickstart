@@ -7,27 +7,47 @@ from langchain_core.runnables import RunnableConfig
 
 
 class Configuration(BaseModel):
-    """The configuration for the agent."""
-
-    # Use Azure OpenAI o3 model names (deployment names or model names as configured in Azure)
+    """The configuration for the agent."""    # Use Azure OpenAI o3 model names (deployment names or model names as configured in Azure)
     query_generator_model: str = Field(
-        default="gpt-4.1",
+        default="gpt-4.1-nano",
         metadata={
             "description": "The name of the Azure OpenAI o3 model to use for query generation."
         },
     )
 
     reflection_model: str = Field(
-        default="gpt-4.1",
+        default="o4-mini",
         metadata={
             "description": "The name of the Azure OpenAI o3 model to use for reflection."
         },
     )
 
     answer_model: str = Field(
-        default="gpt-4.1",
+        default="gpt-4.1-mini",
         metadata={
             "description": "The name of the Azure OpenAI o3 model to use for answer generation."
+        },
+    )
+
+    reasoning_model: str = Field(
+        default="o3",
+        metadata={
+            "description": "The name of the Azure OpenAI o3 model to use for reasoning and reflection."
+        },
+    )
+
+    # Web research settings
+    use_web_research: bool = Field(
+        default=True,
+        metadata={
+            "description": "Whether to use real web research with SerpAPI or fallback to AI-only research."
+        },
+    )
+
+    max_sources_per_query: int = Field(
+        default=5,
+        metadata={
+            "description": "Maximum number of web sources to gather per search query."
         },
     )
 
