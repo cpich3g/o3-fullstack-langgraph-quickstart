@@ -5,27 +5,29 @@ from typing import Any, Optional
 from langchain_core.runnables import RunnableConfig
 
 
+
 class Configuration(BaseModel):
     """The configuration for the agent."""
 
+    # Use Azure OpenAI o3 model names (deployment names or model names as configured in Azure)
     query_generator_model: str = Field(
-        default="gemini-2.0-flash",
+        default="gpt-4.1",
         metadata={
-            "description": "The name of the language model to use for the agent's query generation."
+            "description": "The name of the Azure OpenAI o3 model to use for query generation."
         },
     )
 
     reflection_model: str = Field(
-        default="gemini-2.5-flash-preview-04-17",
+        default="gpt-4.1",
         metadata={
-            "description": "The name of the language model to use for the agent's reflection."
+            "description": "The name of the Azure OpenAI o3 model to use for reflection."
         },
     )
 
     answer_model: str = Field(
-        default="gemini-2.5-pro-preview-05-06",
+        default="gpt-4.1",
         metadata={
-            "description": "The name of the language model to use for the agent's answer."
+            "description": "The name of the Azure OpenAI o3 model to use for answer generation."
         },
     )
 

@@ -1,5 +1,4 @@
 import os
-
 from agent.tools_and_schemas import SearchQueryList, Reflection
 from dotenv import load_dotenv
 from langchain_core.messages import AIMessage
@@ -7,7 +6,7 @@ from langgraph.types import Send
 from langgraph.graph import StateGraph
 from langgraph.graph import START, END
 from langchain_core.runnables import RunnableConfig
-from google.genai import Client
+from openai import AzureOpenAI
 
 from agent.state import (
     OverallState,
@@ -23,7 +22,6 @@ from agent.prompts import (
     reflection_instructions,
     answer_instructions,
 )
-from langchain_google_genai import ChatGoogleGenerativeAI
 from agent.utils import (
     get_citations,
     get_research_topic,
@@ -33,52 +31,44 @@ from agent.utils import (
 
 load_dotenv()
 
-if os.getenv("GEMINI_API_KEY") is None:
-    raise ValueError("GEMINI_API_KEY is not set")
+if os.getenv("AZURE_OPENAI_API_KEY") is None:
+    raise ValueError("AZURE_OPENAI_API_KEY is not set")
 
-# Used for Google Search API
-genai_client = Client(api_key=os.getenv("GEMINI_API_KEY"))
+# Azure OpenAI client
+openai_client = AzureOpenAI(
+    api_key=os.getenv("AZURE_OPENAI_API_KEY"),
+    api_version=os.getenv("AZURE_OPENAI_API_VERSION", "2024-02-15-preview"),
+    azure_endpoint=os.getenv("AZURE_OPENAI_ENDPOINT"),
+)
 
 
 # Nodes
 def generate_query(state: OverallState, config: RunnableConfig) -> QueryGenerationState:
-    """LangGraph node that generates a search queries based on the User's question.
-
-    Uses Gemini 2.0 Flash to create an optimized search query for web research based on
-    the User's question.
-
-    Args:
-        state: Current graph state containing the User's question
-        config: Configuration for the runnable, including LLM provider settings
-
-    Returns:
-        Dictionary with state update, including search_query key containing the generated query
-    """
+    """LangGraph node that generates a search queries based on the User's question using Azure OpenAI."""
     configurable = Configuration.from_runnable_config(config)
-
-    # check for custom initial search query count
     if state.get("initial_search_query_count") is None:
         state["initial_search_query_count"] = configurable.number_of_initial_queries
 
-    # init Gemini 2.0 Flash
-    llm = ChatGoogleGenerativeAI(
-        model=configurable.query_generator_model,
-        temperature=1.0,
-        max_retries=2,
-        api_key=os.getenv("GEMINI_API_KEY"),
-    )
-    structured_llm = llm.with_structured_output(SearchQueryList)
-
-    # Format the prompt
     current_date = get_current_date()
     formatted_prompt = query_writer_instructions.format(
         current_date=current_date,
         research_topic=get_research_topic(state["messages"]),
         number_queries=state["initial_search_query_count"],
     )
-    # Generate the search queries
-    result = structured_llm.invoke(formatted_prompt)
-    return {"query_list": result.query}
+    # Call Azure OpenAI o3 model for query generation
+    completion = openai_client.chat.completions.create(
+        model=configurable.query_generator_model,
+        messages=[{"role": "system", "content": formatted_prompt}],
+        # temperature=1.0,
+        max_tokens=256,
+    )
+    # Parse output (assuming output is a JSON list of queries)
+    import json
+    try:
+        queries = json.loads(completion.choices[0].message.content)
+    except Exception:
+        queries = [completion.choices[0].message.content]
+    return {"query_list": queries}
 
 
 def continue_to_web_research(state: QueryGenerationState):
@@ -93,42 +83,24 @@ def continue_to_web_research(state: QueryGenerationState):
 
 
 def web_research(state: WebSearchState, config: RunnableConfig) -> OverallState:
-    """LangGraph node that performs web research using the native Google Search API tool.
-
-    Executes a web search using the native Google Search API tool in combination with Gemini 2.0 Flash.
-
-    Args:
-        state: Current graph state containing the search query and research loop count
-        config: Configuration for the runnable, including search API settings
-
-    Returns:
-        Dictionary with state update, including sources_gathered, research_loop_count, and web_research_results
-    """
-    # Configure
+    """LangGraph node that performs web research using Azure OpenAI o3 model (no Google Search API)."""
     configurable = Configuration.from_runnable_config(config)
     formatted_prompt = web_searcher_instructions.format(
         current_date=get_current_date(),
         research_topic=state["search_query"],
     )
-
-    # Uses the google genai client as the langchain client doesn't return grounding metadata
-    response = genai_client.models.generate_content(
+    # Call Azure OpenAI o3 model for web research
+    completion = openai_client.chat.completions.create(
         model=configurable.query_generator_model,
-        contents=formatted_prompt,
-        config={
-            "tools": [{"google_search": {}}],
-            "temperature": 0,
-        },
+        messages=[{"role": "system", "content": formatted_prompt}],
+        # temperature=0,
+        max_tokens=1024,
     )
-    # resolve the urls to short urls for saving tokens and time
-    resolved_urls = resolve_urls(
-        response.candidates[0].grounding_metadata.grounding_chunks, state["id"]
-    )
-    # Gets the citations and adds them to the generated text
-    citations = get_citations(response, resolved_urls)
-    modified_text = insert_citation_markers(response.text, citations)
-    sources_gathered = [item for citation in citations for item in citation["segments"]]
-
+    text = completion.choices[0].message.content
+    # Dummy citation logic (replace with your own if needed)
+    citations = []
+    modified_text = text
+    sources_gathered = []
     return {
         "sources_gathered": sources_gathered,
         "search_query": [state["search_query"]],
@@ -137,44 +109,35 @@ def web_research(state: WebSearchState, config: RunnableConfig) -> OverallState:
 
 
 def reflection(state: OverallState, config: RunnableConfig) -> ReflectionState:
-    """LangGraph node that identifies knowledge gaps and generates potential follow-up queries.
-
-    Analyzes the current summary to identify areas for further research and generates
-    potential follow-up queries. Uses structured output to extract
-    the follow-up query in JSON format.
-
-    Args:
-        state: Current graph state containing the running summary and research topic
-        config: Configuration for the runnable, including LLM provider settings
-
-    Returns:
-        Dictionary with state update, including search_query key containing the generated follow-up query
-    """
+    """LangGraph node that identifies knowledge gaps and generates potential follow-up queries using Azure OpenAI."""
     configurable = Configuration.from_runnable_config(config)
-    # Increment the research loop count and get the reasoning model
     state["research_loop_count"] = state.get("research_loop_count", 0) + 1
     reasoning_model = state.get("reasoning_model") or configurable.reasoning_model
-
-    # Format the prompt
     current_date = get_current_date()
     formatted_prompt = reflection_instructions.format(
         current_date=current_date,
         research_topic=get_research_topic(state["messages"]),
         summaries="\n\n---\n\n".join(state["web_research_result"]),
     )
-    # init Reasoning Model
-    llm = ChatGoogleGenerativeAI(
+    completion = openai_client.chat.completions.create(
         model=reasoning_model,
-        temperature=1.0,
-        max_retries=2,
-        api_key=os.getenv("GEMINI_API_KEY"),
+        messages=[{"role": "system", "content": formatted_prompt}],
+        # temperature=1.0,
+        max_tokens=512,
     )
-    result = llm.with_structured_output(Reflection).invoke(formatted_prompt)
-
+    import json
+    try:
+        result = json.loads(completion.choices[0].message.content)
+    except Exception:
+        result = {
+            "is_sufficient": False,
+            "knowledge_gap": "",
+            "follow_up_queries": [],
+        }
     return {
-        "is_sufficient": result.is_sufficient,
-        "knowledge_gap": result.knowledge_gap,
-        "follow_up_queries": result.follow_up_queries,
+        "is_sufficient": result.get("is_sufficient", False),
+        "knowledge_gap": result.get("knowledge_gap", ""),
+        "follow_up_queries": result.get("follow_up_queries", []),
         "research_loop_count": state["research_loop_count"],
         "number_of_ran_queries": len(state["search_query"]),
     }
@@ -218,49 +181,29 @@ def evaluate_research(
 
 
 def finalize_answer(state: OverallState, config: RunnableConfig):
-    """LangGraph node that finalizes the research summary.
-
-    Prepares the final output by deduplicating and formatting sources, then
-    combining them with the running summary to create a well-structured
-    research report with proper citations.
-
-    Args:
-        state: Current graph state containing the running summary and sources gathered
-
-    Returns:
-        Dictionary with state update, including running_summary key containing the formatted final summary with sources
-    """
+    """LangGraph node that finalizes the research summary using Azure OpenAI."""
     configurable = Configuration.from_runnable_config(config)
     reasoning_model = state.get("reasoning_model") or configurable.reasoning_model
-
-    # Format the prompt
     current_date = get_current_date()
     formatted_prompt = answer_instructions.format(
         current_date=current_date,
         research_topic=get_research_topic(state["messages"]),
         summaries="\n---\n\n".join(state["web_research_result"]),
     )
-
-    # init Reasoning Model, default to Gemini 2.5 Flash
-    llm = ChatGoogleGenerativeAI(
+    completion = openai_client.chat.completions.create(
         model=reasoning_model,
-        temperature=0,
-        max_retries=2,
-        api_key=os.getenv("GEMINI_API_KEY"),
+        messages=[{"role": "system", "content": formatted_prompt}],
+        # temperature=0,
+        max_tokens=1024,
     )
-    result = llm.invoke(formatted_prompt)
-
-    # Replace the short urls with the original urls and add all used urls to the sources_gathered
+    content = completion.choices[0].message.content
     unique_sources = []
     for source in state["sources_gathered"]:
-        if source["short_url"] in result.content:
-            result.content = result.content.replace(
-                source["short_url"], source["value"]
-            )
+        if source.get("short_url") and source["short_url"] in content:
+            content = content.replace(source["short_url"], source["value"])
             unique_sources.append(source)
-
     return {
-        "messages": [AIMessage(content=result.content)],
+        "messages": [AIMessage(content=content)],
         "sources_gathered": unique_sources,
     }
 
