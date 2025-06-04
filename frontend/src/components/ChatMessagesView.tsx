@@ -347,9 +347,71 @@ const HumanMessageBubble: React.FC<HumanMessageBubbleProps> = ({
   message,
   mdComponents,
 }) => {
+  // Custom markdown components for white text in user message bubble
+  const humanMessageMdComponents = {
+    ...mdComponents,
+    p: ({ className, children, ...props }: React.ComponentPropsWithoutRef<"p">) => (
+      <p className={cn("mb-4 leading-relaxed text-white", className)} {...props}>
+        {children}
+      </p>
+    ),
+    h1: ({ className, children, ...props }: React.ComponentPropsWithoutRef<"h1">) => (
+      <h1 className={cn("text-2xl font-bold mt-6 mb-3 text-white", className)} {...props}>
+        {children}
+      </h1>
+    ),
+    h2: ({ className, children, ...props }: React.ComponentPropsWithoutRef<"h2">) => (
+      <h2 className={cn("text-xl font-semibold mt-5 mb-3 text-white", className)} {...props}>
+        {children}
+      </h2>
+    ),
+    h3: ({ className, children, ...props }: React.ComponentPropsWithoutRef<"h3">) => (
+      <h3 className={cn("text-lg font-semibold mt-4 mb-2 text-white", className)} {...props}>
+        {children}
+      </h3>
+    ),
+    li: ({ className, children, ...props }: React.ComponentPropsWithoutRef<"li">) => (
+      <li className={cn("text-white", className)} {...props}>
+        {children}
+      </li>
+    ),
+    strong: ({ className, children, ...props }: React.ComponentPropsWithoutRef<"strong">) => (
+      <strong className={cn("text-white font-semibold", className)} {...props}>
+        {children}
+      </strong>
+    ),
+    em: ({ className, children, ...props }: React.ComponentPropsWithoutRef<"em">) => (
+      <em className={cn("text-white/90", className)} {...props}>
+        {children}
+      </em>
+    ),
+    code: ({ className, children, ...props }: React.ComponentPropsWithoutRef<"code">) => (
+      <code
+        className={cn(
+          "bg-white/20 border border-white/30 rounded px-1.5 py-0.5 font-mono text-sm text-white",
+          className
+        )}
+        {...props}
+      >
+        {children}
+      </code>
+    ),
+    blockquote: ({ className, children, ...props }: React.ComponentPropsWithoutRef<"blockquote">) => (
+      <blockquote
+        className={cn(
+          "border-l-4 border-white/50 pl-4 py-2 italic my-4 bg-white/10 rounded-r text-white/90",
+          className
+        )}
+        {...props}
+      >
+        {children}
+      </blockquote>
+    ),
+  };
+
   return (
-    <div className="bg-gradient-to-r from-primary to-primary/80 text-primary-foreground rounded-2xl px-6 py-4 shadow-lg border border-primary/30 backdrop-blur-sm">
-      <ReactMarkdown components={mdComponents} remarkPlugins={[remarkGfm]}>
+    <div className="bg-gradient-to-r from-primary to-primary/80 text-white rounded-2xl px-6 py-4 shadow-lg border border-primary/30 backdrop-blur-sm">
+      <ReactMarkdown components={humanMessageMdComponents} remarkPlugins={[remarkGfm]}>
         {typeof message.content === "string"
           ? message.content
           : JSON.stringify(message.content)}
