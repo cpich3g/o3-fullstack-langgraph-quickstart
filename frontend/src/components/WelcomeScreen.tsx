@@ -88,7 +88,7 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
             </div>
             <div className="text-left">
               <div className="text-sm font-semibold text-foreground">AI-Powered</div>
-              <div className="text-xs text-muted-foreground">Azure OpenAI o3 reasoning</div>
+              <div className="text-xs text-muted-foreground">Azure agentic reasoning</div>
             </div>
           </div>
         </div>
