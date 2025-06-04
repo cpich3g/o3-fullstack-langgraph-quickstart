@@ -15,18 +15,17 @@ interface SourcesDisplayProps {
 
 export const SourcesDisplay: React.FC<SourcesDisplayProps> = ({ sources }) => {
   if (!sources || sources.length === 0) return null;
-
   return (
-    <div className="bg-neutral-900 rounded-lg border border-neutral-600 overflow-hidden">
-      <div className="px-4 py-3 bg-neutral-800 border-b border-neutral-700">
-        <h4 className="font-semibold text-neutral-200 flex items-center">
+    <div className="bg-card rounded-lg border border-border overflow-hidden">
+      <div className="px-4 py-3 bg-muted border-b border-border">
+        <h4 className="font-semibold text-foreground flex items-center">
           <ExternalLink className="h-4 w-4 mr-2 text-blue-400" />
           Sources ({sources.length})
         </h4>
       </div>
       <div className="p-4">
         <div className="grid gap-3">
-          {sources.map((source, index) => (            <div key={index} className="border border-neutral-700 rounded-lg p-4 bg-neutral-800/50 hover:bg-neutral-800 transition-all duration-300 hover:shadow-lg hover:shadow-blue-500/5 group">
+          {sources.map((source, index) => (            <div key={index} className="border border-border rounded-lg p-4 bg-muted/50 hover:bg-muted transition-all duration-300 hover:shadow-lg hover:shadow-blue-500/5 group">
               <div className="flex items-start justify-between">
                 <a 
                   href={source.value} 
@@ -49,14 +48,13 @@ export const SourcesDisplay: React.FC<SourcesDisplayProps> = ({ sources }) => {
                       </div>
                     )}
                   </div>
-                )}              </div>
-              {source.short_url && (
-                <div className="mt-2 text-xs text-neutral-500 font-mono bg-neutral-900/50 px-2 py-1 rounded">
+                )}              </div>              {source.short_url && (
+                <div className="mt-2 text-xs text-muted-foreground font-mono bg-muted/50 px-2 py-1 rounded">
                   {source.short_url}
                 </div>
               )}
               {source.snippet && (
-                <p className="text-xs text-neutral-400 mt-3 leading-relaxed line-clamp-3 bg-neutral-900/30 p-2 rounded border-l-2 border-blue-500/20">
+                <p className="text-xs text-muted-foreground mt-3 leading-relaxed line-clamp-3 bg-muted/30 p-2 rounded border-l-2 border-blue-500/20">
                   {source.snippet}
                 </p>
               )}

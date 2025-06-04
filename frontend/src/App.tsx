@@ -4,6 +4,7 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { ProcessedEvent } from "@/components/ActivityTimeline";
 import { WelcomeScreen } from "@/components/WelcomeScreen";
 import { ChatMessagesView } from "@/components/ChatMessagesView";
+import { ThemeProvider } from "@/components/ThemeProvider";
 
 export default function App() {
   const [processedEventsTimeline, setProcessedEventsTimeline] = useState<
@@ -189,28 +190,30 @@ export default function App() {
     thread.stop();
     window.location.reload();
   }, [thread]);  return (
-    <div className="fixed inset-0 bg-gradient-to-br from-neutral-900 via-neutral-800 to-neutral-900 text-neutral-100 font-sans antialiased">
-      <main className="flex flex-col h-full max-w-6xl mx-auto">
-        {thread.messages.length === 0 ? (
-          <div className="flex flex-col h-full">
-            <WelcomeScreen
-              handleSubmit={handleSubmit}
+    <ThemeProvider>
+      <div className="fixed inset-0 bg-gradient-to-br from-background via-muted/30 to-background text-foreground font-sans antialiased">
+        <main className="flex flex-col h-full max-w-6xl mx-auto">
+          {thread.messages.length === 0 ? (
+            <div className="flex flex-col h-full">
+              <WelcomeScreen
+                handleSubmit={handleSubmit}
+                isLoading={thread.isLoading}
+                onCancel={handleCancel}
+              />
+            </div>
+          ) : (
+            <ChatMessagesView
+              messages={thread.messages}
               isLoading={thread.isLoading}
+              scrollAreaRef={scrollAreaRef}
+              onSubmit={handleSubmit}
               onCancel={handleCancel}
+              liveActivityEvents={processedEventsTimeline}
+              historicalActivities={historicalActivities}
             />
-          </div>
-        ) : (
-          <ChatMessagesView
-            messages={thread.messages}
-            isLoading={thread.isLoading}
-            scrollAreaRef={scrollAreaRef}
-            onSubmit={handleSubmit}
-            onCancel={handleCancel}
-            liveActivityEvents={processedEventsTimeline}
-            historicalActivities={historicalActivities}
-          />
-        )}
-      </main>
-    </div>
+          )}
+        </main>
+      </div>
+    </ThemeProvider>
   );
 }

@@ -33,16 +33,16 @@ export function ActivityTimeline({
 }: ActivityTimelineProps) {
   const [isTimelineCollapsed, setIsTimelineCollapsed] =
     useState<boolean>(false);
-  const [expandedSteps, setExpandedSteps] = useState<Set<number>>(new Set());const getEventIcon = (title: string, index: number) => {
+  const [expandedSteps, setExpandedSteps] = useState<Set<number>>(new Set());  const getEventIcon = (title: string, index: number) => {
     if (index === 0 && isLoading && processedEvents.length === 0) {
-      return <Loader2 className="h-4 w-4 text-neutral-400 animate-spin" />;
+      return <Loader2 className="h-4 w-4 text-muted-foreground animate-spin" />;
     }
     
     const titleLower = title.toLowerCase();
     if (titleLower.includes("generating")) {
       return <TextSearch className="h-4 w-4 text-blue-400" />;
     } else if (titleLower.includes("thinking")) {
-      return <Loader2 className="h-4 w-4 text-neutral-400 animate-spin" />;
+      return <Loader2 className="h-4 w-4 text-muted-foreground animate-spin" />;
     } else if (titleLower.includes("reflection")) {
       return <Brain className="h-4 w-4 text-purple-400" />;
     } else if (titleLower.includes("research")) {
@@ -50,7 +50,7 @@ export function ActivityTimeline({
     } else if (titleLower.includes("finalizing")) {
       return <Pen className="h-4 w-4 text-orange-400" />;
     }
-    return <Activity className="h-4 w-4 text-neutral-400" />;
+    return <Activity className="h-4 w-4 text-muted-foreground" />;
   };
 
   const getCleanStepTitle = (title: string): string => {
@@ -156,15 +156,14 @@ export function ActivityTimeline({
       const data = eventItem.data as Record<string, unknown>;
       
       // Check if it's a query generation response - show detailed view for this important step
-      if (data.rationale && data.query && eventItem.title.toLowerCase().includes("generating")) {
-        return (
+      if (data.rationale && data.query && eventItem.title.toLowerCase().includes("generating")) {        return (
           <div className="space-y-2">
-            <div className="text-xs text-neutral-300 mb-2">{cleanDescription}</div>
+            <div className="text-xs text-foreground mb-2">{cleanDescription}</div>
             {isExpanded && (
               <>
-                <div className="p-2 bg-neutral-800/50 rounded-md border border-neutral-600/50">
-                  <div className="text-xs font-medium text-neutral-200 mb-1">Strategy:</div>
-                  <div className="text-xs text-neutral-300">{String(data.rationale)}</div>
+                <div className="p-2 bg-muted/50 rounded-md border border-border/50">
+                  <div className="text-xs font-medium text-foreground mb-1">Strategy:</div>
+                  <div className="text-xs text-foreground">{String(data.rationale)}</div>
                 </div>
                 <div className="p-2 bg-blue-500/10 rounded-md border border-blue-500/20">
                   <div className="text-xs font-medium text-blue-300 mb-1">Search Terms:</div>
@@ -193,10 +192,9 @@ export function ActivityTimeline({
         );
       }
     }
-    
-    return (
+      return (
       <div>
-        <div className="text-xs text-neutral-300">{cleanDescription}</div>
+        <div className="text-xs text-foreground">{cleanDescription}</div>
         {hasComplexData && !eventItem.title.toLowerCase().includes("generating") && (
           <button
             onClick={(e) => {
@@ -209,13 +207,13 @@ export function ActivityTimeline({
               }
               setExpandedSteps(newExpanded);
             }}
-            className="text-xs text-neutral-500 hover:text-neutral-400 underline cursor-pointer mt-1"
+            className="text-xs text-muted-foreground hover:text-foreground underline cursor-pointer mt-1"
           >
             {isExpanded ? "Hide raw data" : "Show raw data"}
           </button>
         )}
         {hasComplexData && isExpanded && !eventItem.title.toLowerCase().includes("generating") && (
-          <pre className="text-xs text-neutral-400 mt-2 p-2 bg-neutral-900/50 rounded border border-neutral-700 overflow-x-auto">
+          <pre className="text-xs text-muted-foreground mt-2 p-2 bg-muted/50 rounded border border-border overflow-x-auto">
             {JSON.stringify(eventItem.data, null, 2)}
           </pre>
         )}
@@ -228,11 +226,11 @@ export function ActivityTimeline({
       setIsTimelineCollapsed(true);
     }
   }, [isLoading, processedEvents]);  return (
-    <Card className="border-none rounded-lg bg-neutral-700">
+    <Card className="border-none rounded-lg bg-card">
       <CardHeader>
         <CardDescription className="flex items-center justify-between">
           <div
-            className="flex items-center justify-start text-sm w-full cursor-pointer gap-2 text-neutral-100"
+            className="flex items-center justify-start text-sm w-full cursor-pointer gap-2 text-foreground"
             onClick={() => setIsTimelineCollapsed(!isTimelineCollapsed)}
           >
             <div className="flex items-center gap-2">
@@ -257,51 +255,48 @@ export function ActivityTimeline({
         </CardDescription>
       </CardHeader>
       {!isTimelineCollapsed && (
-        <CardContent>
-          {isLoading && processedEvents.length === 0 && (
+        <CardContent>          {isLoading && processedEvents.length === 0 && (
             <div className="relative pl-8 pb-4">
-              <div className="absolute left-3 top-3.5 h-full w-0.5 bg-neutral-800" />
-              <div className="absolute left-0.5 top-2 h-5 w-5 rounded-full bg-neutral-800 flex items-center justify-center ring-4 ring-neutral-900">
-                <Loader2 className="h-3 w-3 text-neutral-400 animate-spin" />
+              <div className="absolute left-3 top-3.5 h-full w-0.5 bg-border" />
+              <div className="absolute left-0.5 top-2 h-5 w-5 rounded-full bg-border flex items-center justify-center ring-4 ring-background">
+                <Loader2 className="h-3 w-3 text-muted-foreground animate-spin" />
               </div>
               <div>
-                <p className="text-sm text-neutral-300 font-medium">
+                <p className="text-sm text-foreground font-medium">
                   🚀 Initializing Research
                 </p>
-                <p className="text-xs text-neutral-400">
+                <p className="text-xs text-muted-foreground">
                   Preparing to gather comprehensive information...
                 </p>
               </div>
             </div>
           )}
           {processedEvents.length > 0 ? (
-            <div className="space-y-0">
-              {processedEvents.map((eventItem, index) => (
+            <div className="space-y-0">              {processedEvents.map((eventItem, index) => (
                 <div key={index} className="relative pl-8 pb-4">
                   {index < processedEvents.length - 1 ||
                   (isLoading && index === processedEvents.length - 1) ? (
-                    <div className="absolute left-3 top-3.5 h-full w-0.5 bg-neutral-600" />
+                    <div className="absolute left-3 top-3.5 h-full w-0.5 bg-border" />
                   ) : null}
-                  <div className="absolute left-0.5 top-2 h-6 w-6 rounded-full bg-neutral-600 flex items-center justify-center ring-4 ring-neutral-700">
+                  <div className="absolute left-0.5 top-2 h-6 w-6 rounded-full bg-muted flex items-center justify-center ring-4 ring-card">
                     {getEventIcon(eventItem.title, index)}
                   </div>
                   <div>
-                    <p className="text-sm text-neutral-200 font-medium mb-0.5">
+                    <p className="text-sm text-foreground font-medium mb-0.5">
                       {getCleanStepTitle(eventItem.title)}
                     </p>
-                    <p className="text-xs text-neutral-300 leading-relaxed">
+                    <p className="text-xs text-foreground leading-relaxed">
                       {renderEventData(eventItem, index)}
                     </p>
                   </div>
                 </div>
-              ))}
-              {isLoading && processedEvents.length > 0 && (
+              ))}              {isLoading && processedEvents.length > 0 && (
                 <div className="relative pl-8 pb-4">
-                  <div className="absolute left-0.5 top-2 h-5 w-5 rounded-full bg-neutral-600 flex items-center justify-center ring-4 ring-neutral-700">
-                    <Loader2 className="h-3 w-3 text-neutral-400 animate-spin" />
+                  <div className="absolute left-0.5 top-2 h-5 w-5 rounded-full bg-muted flex items-center justify-center ring-4 ring-card">
+                    <Loader2 className="h-3 w-3 text-muted-foreground animate-spin" />
                   </div>
                   <div>
-                    <p className="text-sm text-neutral-300 font-medium">
+                    <p className="text-sm text-foreground font-medium">
                       🔄 Processing...
                     </p>
                   </div>
@@ -310,7 +305,7 @@ export function ActivityTimeline({
               {/* Research completion summary */}
               {!isLoading && processedEvents.length > 0 && (
                 <div className="relative pl-8 pb-2">
-                  <div className="absolute left-0.5 top-2 h-5 w-5 rounded-full bg-green-500/20 flex items-center justify-center ring-4 ring-neutral-700 border border-green-500/30">
+                  <div className="absolute left-0.5 top-2 h-5 w-5 rounded-full bg-green-500/20 flex items-center justify-center ring-4 ring-card border border-green-500/30">
                     <svg className="h-3 w-3 text-green-400" fill="currentColor" viewBox="0 0 20 20">
                       <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
                     </svg>
@@ -319,18 +314,17 @@ export function ActivityTimeline({
                     <p className="text-sm text-green-400 font-medium">
                       ✅ Research Complete
                     </p>
-                    <p className="text-xs text-neutral-400">
+                    <p className="text-xs text-muted-foreground">
                       {processedEvents.length} research {processedEvents.length === 1 ? 'step' : 'steps'} completed successfully
                     </p>
                   </div>
                 </div>
               )}
-            </div>
-          ) : !isLoading ? ( // Only show "No activity" if not loading and no events
-            <div className="flex flex-col items-center justify-center h-full text-neutral-500 pt-10">
+            </div>          ) : !isLoading ? ( // Only show "No activity" if not loading and no events
+            <div className="flex flex-col items-center justify-center h-full text-muted-foreground pt-10">
               <Info className="h-6 w-6 mb-3" />
               <p className="text-sm">No activity to display.</p>
-              <p className="text-xs text-neutral-600 mt-1">
+              <p className="text-xs text-muted-foreground mt-1">
                 Timeline will update during processing.
               </p>
             </div>
