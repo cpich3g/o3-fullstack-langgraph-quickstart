@@ -99,14 +99,14 @@ async def web_research(state: WebSearchState, config: RunnableConfig) -> Overall
         # max_tokens=1024,
     )
     ai_generated_text = completion.choices[0].message.content
-    
-    # Enhance with real web data if SerpAPI is available and enabled
+      # Enhance with real web data if search engines are available and enabled
     sources_gathered = []
     if configurable.use_web_research:
         try:
             enhanced_result = await enhance_ai_research_with_real_data(
                 state["search_query"], 
-                ai_generated_text
+                ai_generated_text,
+                search_engine=configurable.search_engine
             )
             final_text = enhanced_result["enhanced_content"]
             
@@ -147,7 +147,7 @@ def reflection(state: OverallState, config: RunnableConfig) -> ReflectionState:
         model=reasoning_model,
         messages=[{"role": "system", "content": formatted_prompt}],
         # temperature=1.0,
-        max_completion_tokens=50000,
+        reasoning_effort="high",
     )
     import json
     try:
@@ -221,7 +221,7 @@ def finalize_answer(state: OverallState, config: RunnableConfig):
         model=reasoning_model,
         messages=[{"role": "system", "content": formatted_prompt}],
         # temperature=0,
-        # max_tokens=1024,
+        reasoning_effort="medium",
     )
     content = completion.choices[0].message.content
     unique_sources = []
@@ -291,4 +291,4 @@ builder.add_conditional_edges(
 # Finalize the answer
 builder.add_edge("finalize_answer", END)
 
-graph = builder.compile(name="pro-search-agent")
+graph = builder.compile(name="azureai-deepsearch-agent")
