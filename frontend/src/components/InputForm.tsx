@@ -46,7 +46,7 @@ export const InputForm: React.FC<InputFormProps> = ({
           value={internalInputValue}
           onChange={(e) => setInternalInputValue(e.target.value)}
           onKeyDown={handleInternalKeyDown}
-          placeholder="Ask anything you'd like to research..."
+          placeholder="What do you want to research today?"
           className="flex-1 text-white/90 placeholder-white/50 resize-none border-0 outline-0 bg-transparent text-base leading-6 py-2 min-h-[24px] max-h-[120px] font-normal placeholder:font-light"
           rows={1}
         />        <div className="flex-shrink-0 flex items-center gap-2">
