@@ -1,0 +1,92 @@
+# Production Docker Compose for Azure Deployment
+services:
+  # Redis for LangGraph state management
+  redis:
+    image: redis:7-alpine
+    container_name: langgraph-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 3
+    command: redis-server --appendonly yes
+
+  # PostgreSQL for LangGraph persistence
+  postgres:
+    image: postgres:16-alpine
+    container_name: langgraph-postgres
+    restart: unless-stopped
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_DB: langgraph
+      POSTGRES_USER: langgraph
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-langgraph_password}
+      POSTGRES_INITDB_ARGS: "--encoding=UTF-8"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U langgraph -d langgraph"]
+      interval: 10s
+      timeout: 3s
+      retries: 3
+
+  # Main application (LangGraph API + React Frontend)
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile.production
+    container_name: deep-research-app
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    environment:
+      # Database configuration
+      POSTGRES_URL: postgresql://langgraph:${POSTGRES_PASSWORD:-langgraph_password}@postgres:5432/langgraph
+      
+      # Redis configuration
+      REDIS_URL: redis://redis:6379
+      
+      # Azure OpenAI configuration (set these in your .env file)
+      AZURE_OPENAI_API_KEY: ${AZURE_OPENAI_API_KEY}
+      AZURE_OPENAI_ENDPOINT: ${AZURE_OPENAI_ENDPOINT}
+      AZURE_OPENAI_API_VERSION: ${AZURE_OPENAI_API_VERSION:-2024-02-01}
+      AZURE_OPENAI_DEPLOYMENT_NAME: ${AZURE_OPENAI_DEPLOYMENT_NAME:-gpt-4o}
+      
+      # Search configuration
+      SEARCH_API_KEY: ${SEARCH_API_KEY}
+      SEARCH_ENGINE_ID: ${SEARCH_ENGINE_ID}
+      
+      # LangGraph configuration
+      LANGGRAPH_DATABASE_URL: postgresql://langgraph:${POSTGRES_PASSWORD:-langgraph_password}@postgres:5432/langgraph
+      LANGGRAPH_REDIS_URL: redis://redis:6379
+      
+      # Application settings
+      CORS_ALLOW_ORIGINS: "*"
+      LOG_LEVEL: ${LOG_LEVEL:-INFO}
+    depends_on:
+      redis:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
+volumes:
+  redis-data:
+    driver: local
+  postgres-data:
+    driver: local
+
+networks:
+  default:
+    name: deep-research-network
