@@ -348,7 +348,7 @@ const HumanMessageBubble: React.FC<HumanMessageBubbleProps> = ({
   mdComponents,
 }) => {
   return (
-    <div className="bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-2xl px-6 py-4 shadow-lg border border-blue-500/30 backdrop-blur-sm">
+    <div className="bg-gradient-to-r from-primary to-primary/80 text-primary-foreground rounded-2xl px-6 py-4 shadow-lg border border-primary/30 backdrop-blur-sm">
       <ReactMarkdown components={mdComponents} remarkPlugins={[remarkGfm]}>
         {typeof message.content === "string"
           ? message.content

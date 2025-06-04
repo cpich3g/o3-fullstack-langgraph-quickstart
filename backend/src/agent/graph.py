@@ -38,7 +38,7 @@ if os.getenv("AZURE_OPENAI_API_KEY") is None:
 # Azure OpenAI client
 openai_client = AzureOpenAI(
     api_key=os.getenv("AZURE_OPENAI_API_KEY"),
-    api_version=os.getenv("AZURE_OPENAI_API_VERSION", "2024-02-15-preview"),
+    api_version=os.getenv("AZURE_OPENAI_API_VERSION"),
     azure_endpoint=os.getenv("AZURE_OPENAI_ENDPOINT"),
 )
 
@@ -136,7 +136,7 @@ def reflection(state: OverallState, config: RunnableConfig) -> ReflectionState:
     """LangGraph node that identifies knowledge gaps and generates potential follow-up queries using Azure OpenAI."""
     configurable = Configuration.from_runnable_config(config)
     state["research_loop_count"] = state.get("research_loop_count", 0) + 1
-    reasoning_model = state.get("reasoning_model") or configurable.reasoning_model
+    reasoning_model = configurable.reasoning_model
     current_date = get_current_date()
     formatted_prompt = reflection_instructions.format(
         current_date=current_date,
@@ -210,7 +210,7 @@ def evaluate_research(
 def finalize_answer(state: OverallState, config: RunnableConfig):
     """LangGraph node that finalizes the research summary using Azure OpenAI."""
     configurable = Configuration.from_runnable_config(config)
-    reasoning_model = state.get("reasoning_model") or configurable.reasoning_model
+    reasoning_model = configurable.reasoning_model
     current_date = get_current_date()
     formatted_prompt = answer_instructions.format(
         current_date=current_date,
