@@ -1,4 +1,5 @@
 # Production Docker Compose for Azure Deployment
+
 services:
   # Redis for LangGraph state management
   redis:
@@ -34,37 +35,39 @@ services:
       test: ["CMD-SHELL", "pg_isready -U langgraph -d langgraph"]
       interval: 10s
       timeout: 3s
-      retries: 3
-
-  # Main application (LangGraph API + React Frontend)
+      retries: 3  # Main application (LangGraph API + React Frontend)
   app:
     build:
       context: .
       dockerfile: Dockerfile.production
     container_name: deep-research-app
     restart: unless-stopped
+    env_file: .env
     ports:
       - "8000:8000"
     environment:
       # Database configuration
       POSTGRES_URL: postgresql://langgraph:${POSTGRES_PASSWORD:-langgraph_password}@postgres:5432/langgraph
+      DATABASE_URI: postgresql://langgraph:${POSTGRES_PASSWORD:-langgraph_password}@postgres:5432/langgraph
       
       # Redis configuration
       REDIS_URL: redis://redis:6379
+      REDIS_URI: redis://redis:6379
       
       # Azure OpenAI configuration (set these in your .env file)
       AZURE_OPENAI_API_KEY: ${AZURE_OPENAI_API_KEY}
       AZURE_OPENAI_ENDPOINT: ${AZURE_OPENAI_ENDPOINT}
-      AZURE_OPENAI_API_VERSION: ${AZURE_OPENAI_API_VERSION:-2024-02-01}
-      AZURE_OPENAI_DEPLOYMENT_NAME: ${AZURE_OPENAI_DEPLOYMENT_NAME:-gpt-4o}
+      AZURE_OPENAI_API_VERSION: ${AZURE_OPENAI_API_VERSION:-2025-04-01-preview}
+      AZURE_OPENAI_DEPLOYMENT_NAME: ${AZURE_OPENAI_DEPLOYMENT_NAME:-gpt-4.1}
       
       # Search configuration
       SEARCH_API_KEY: ${SEARCH_API_KEY}
       SEARCH_ENGINE_ID: ${SEARCH_ENGINE_ID}
-      
-      # LangGraph configuration
+        # LangGraph configuration
       LANGGRAPH_DATABASE_URL: postgresql://langgraph:${POSTGRES_PASSWORD:-langgraph_password}@postgres:5432/langgraph
       LANGGRAPH_REDIS_URL: redis://redis:6379
+      LANGGRAPH_API_KEY: ${LANGGRAPH_API_KEY}
+      LANGSMITH_API_KEY: ${LANGGRAPH_API_KEY}
       
       # Application settings
       CORS_ALLOW_ORIGINS: "*"

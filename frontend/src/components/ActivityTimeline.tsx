@@ -4,6 +4,7 @@ import {
   CardDescription,
   CardHeader,
 } from "@/components/ui/card";
+import { Progress } from "@/components/ui/progress";
 import {
   Loader2,
   Activity,
@@ -33,11 +34,76 @@ export function ActivityTimeline({
 }: ActivityTimelineProps) {
   const [isTimelineCollapsed, setIsTimelineCollapsed] =
     useState<boolean>(false);
-  const [expandedSteps, setExpandedSteps] = useState<Set<number>>(new Set());  const getEventIcon = (title: string, index: number) => {
+  const [expandedSteps, setExpandedSteps] = useState<Set<number>>(new Set());
+
+  // Calculate progress based on research stages
+  const calculateProgress = () => {
+    if (!isLoading && processedEvents.length === 0) return 0;
+
+    const stages = [
+      "generating", // Query generation
+      "research", // Web research
+      "reflection", // Analysis
+      "finalizing", // Answer synthesis
+    ];
+
+    let completedStages = 0;
+    const totalStages = stages.length;
+
+    // Check which stages have been completed
+    stages.forEach((stage) => {
+      const hasStage = processedEvents.some((event) =>
+        event.title.toLowerCase().includes(stage)
+      );
+      if (hasStage) completedStages++;
+    });
+
+    // If currently loading and we have events, we're in progress on the next stage
+    if (isLoading && processedEvents.length > 0) {
+      // Add partial progress for the current stage being processed
+      completedStages += 0.5;
+    }
+
+    // If research is complete (not loading and has events), show 100%
+    if (!isLoading && processedEvents.length > 0) {
+      return 100;
+    }
+
+    // Calculate percentage
+    const percentage = (completedStages / totalStages) * 100;
+    return Math.min(Math.max(percentage, isLoading ? 10 : 0), 100); // Clamp between 10 and 100
+  };
+  const getProgressLabel = () => {
+    if (!isLoading && processedEvents.length === 0) return "Ready to research";
+    if (!isLoading && processedEvents.length > 0) return "Research complete";
+
+    // Determine current stage
+    const hasGeneration = processedEvents.some((e) =>
+      e.title.toLowerCase().includes("generating")
+    );
+    const hasResearch = processedEvents.some((e) =>
+      e.title.toLowerCase().includes("research")
+    );
+    const hasReflection = processedEvents.some((e) =>
+      e.title.toLowerCase().includes("reflection")
+    );
+    const hasFinalizing = processedEvents.some((e) =>
+      e.title.toLowerCase().includes("finalizing")
+    );
+
+    if (hasFinalizing) return "Finalizing answer...";
+    if (hasReflection) return "Analyzing results...";
+    if (hasResearch) return "Gathering information...";
+    if (hasGeneration) return "Planning research...";
+
+    return "Initializing...";
+  };
+
+  const getEventIcon = (title: string, index: number) => {
     if (index === 0 && isLoading && processedEvents.length === 0) {
       return <Loader2 className="h-4 w-4 text-muted-foreground animate-spin" />;
     }
-    
+
     const titleLower = title.toLowerCase();
     if (titleLower.includes("generating")) {
       return <TextSearch className="h-4 w-4 text-blue-400" />;
@@ -55,7 +121,7 @@ export function ActivityTimeline({
 
   const getCleanStepTitle = (title: string): string => {
     const titleLower = title.toLowerCase();
-    
+
     if (titleLower.includes("generating")) {
       return "📝 Query Planning";
     }
@@ -71,27 +137,36 @@ export function ActivityTimeline({
     if (titleLower.includes("thinking")) {
       return "💭 Processing";
     }
-    
+
     return title;
   };
-  const getCleanStepDescription = (title: string, data: string | string[] | Record<string, unknown>): string => {
+  const getCleanStepDescription = (
+    title: string,
+    data: string | string[] | Record<string, unknown>
+  ): string => {
     const titleLower = title.toLowerCase();
-    
+
     // Generate cleaner descriptions based on the step type
     if (titleLower.includes("generating")) {
       if (Array.isArray(data)) {
-        return `Generated ${data.length} search ${data.length === 1 ? 'query' : 'queries'} based on the research topic`;
+        return `Generated ${data.length} search ${
+          data.length === 1 ? "query" : "queries"
+        } based on the research topic`;
       }
       if (typeof data === "object" && data !== null) {
         const dataObj = data as Record<string, unknown>;
         if (dataObj.query) {
-          const queries = Array.isArray(dataObj.query) ? dataObj.query : [dataObj.query];
-          return `Generated ${queries.length} targeted search ${queries.length === 1 ? 'query' : 'queries'} to gather comprehensive information`;
+          const queries = Array.isArray(dataObj.query)
+            ? dataObj.query
+            : [dataObj.query];
+          return `Generated ${queries.length} targeted search ${
+            queries.length === 1 ? "query" : "queries"
+          } to gather comprehensive information`;
         }
       }
       return "Generated search queries to explore the topic comprehensively";
     }
-    
+
     if (titleLower.includes("web research")) {
       if (typeof data === "string") {
         if (data.includes("Found") && data.includes("sources")) {
@@ -103,7 +178,7 @@ export function ActivityTimeline({
       }
       return "Conducted comprehensive web research to gather current information";
     }
-    
+
     if (titleLower.includes("reflection")) {
       if (typeof data === "string") {
         if (data.includes("successful")) {
@@ -115,48 +190,54 @@ export function ActivityTimeline({
       }
       return "Evaluated research completeness and determined next steps";
     }
-    
+
     if (titleLower.includes("finalizing")) {
       return "Synthesizing all research findings into a comprehensive, well-structured response";
     }
-    
+
     if (titleLower.includes("thinking")) {
       return "Processing and analyzing available information to guide research strategy";
     }
-    
+
     // For other cases, return the original data if it's a clean string
     if (typeof data === "string") {
       return data;
     }
-    
+
     // For arrays, join them meaningfully
     if (Array.isArray(data)) {
       return data.join(", ");
     }
-    
+
     // For objects, try to extract meaningful summary
     if (typeof data === "object" && data !== null) {
       const dataObj = data as Record<string, unknown>;
       if (dataObj.rationale && dataObj.query) {
-        const queries = Array.isArray(dataObj.query) ? dataObj.query : [dataObj.query];
+        const queries = Array.isArray(dataObj.query)
+          ? dataObj.query
+          : [dataObj.query];
         return `Developed research strategy targeting: ${queries.join(", ")}`;
       }
     }
-    
+
     return "Processing research step...";
   };
   const renderEventData = (eventItem: ProcessedEvent, index: number) => {
     // Get clean description instead of raw data
-    const cleanDescription = getCleanStepDescription(eventItem.title, eventItem.data);
+    const cleanDescription = getCleanStepDescription(
+      eventItem.title,
+      eventItem.data
+    );
     const hasComplexData = typeof eventItem.data === "object" && eventItem.data !== null;
     const isExpanded = expandedSteps.has(index);
-    
+
     // For query generation, show the structured view if it's object data with rationale and query
     if (typeof eventItem.data === "object" && eventItem.data !== null) {
       const data = eventItem.data as Record<string, unknown>;
-      
+
       // Check if it's a query generation response - show detailed view for this important step
-      if (data.rationale && data.query && eventItem.title.toLowerCase().includes("generating")) {        return (
+      if (data.rationale && data.query && eventItem.title.toLowerCase().includes("generating")) {
+        return (
           <div className="space-y-2">
             <div className="text-xs text-foreground mb-2">{cleanDescription}</div>
             {isExpanded && (
@@ -225,7 +306,8 @@ export function ActivityTimeline({
     if (!isLoading && processedEvents.length !== 0) {
       setIsTimelineCollapsed(true);
     }
-  }, [isLoading, processedEvents]);  return (
+  }, [isLoading, processedEvents]);
+  return (
     <Card className="border-none rounded-lg bg-card">
       <CardHeader>
         <CardDescription className="flex items-center justify-between">
@@ -251,11 +333,49 @@ export function ActivityTimeline({
             ) : (
               <ChevronUp className="h-4 w-4 mr-2" />
             )}
-          </div>
-        </CardDescription>
+          </div>        </CardDescription>
       </CardHeader>
+      
+      {/* Progress Bar Section */}
+      <div className="px-6 pb-4">
+        <div className="space-y-2">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-medium text-foreground">
+              {getProgressLabel()}
+            </span>
+            <span className="text-xs text-muted-foreground">
+              {Math.round(calculateProgress())}%
+            </span>
+          </div>
+          <Progress 
+            value={calculateProgress()} 
+            className="h-2 bg-muted/30"
+          />
+          <div className="flex justify-between text-xs text-muted-foreground">
+            <span>Plan</span>
+            <span>Research</span>
+            <span>Analyze</span>
+            <span>Synthesize</span>
+          </div>
+        </div>
+      </div>
+      
       {!isTimelineCollapsed && (
-        <CardContent>          {isLoading && processedEvents.length === 0 && (
+        <CardContent>
+          <div className="pb-4">
+            <Progress
+              value={calculateProgress()}
+              className="h-2.5 rounded-full"
+              aria-label="Research progress"
+            />
+            <div className="flex justify-between text-xs text-muted-foreground mt-1">
+              <span>{getProgressLabel()}</span>
+              <span>
+                {processedEvents.length} {processedEvents.length === 1 ? 'step' : 'steps'}
+              </span>
+            </div>
+          </div>
+          {isLoading && processedEvents.length === 0 && (
             <div className="relative pl-8 pb-4">
               <div className="absolute left-3 top-3.5 h-full w-0.5 bg-border" />
               <div className="absolute left-0.5 top-2 h-5 w-5 rounded-full bg-border flex items-center justify-center ring-4 ring-background">
@@ -272,7 +392,8 @@ export function ActivityTimeline({
             </div>
           )}
           {processedEvents.length > 0 ? (
-            <div className="space-y-0">              {processedEvents.map((eventItem, index) => (
+            <div className="space-y-0">
+              {processedEvents.map((eventItem, index) => (
                 <div key={index} className="relative pl-8 pb-4">
                   {index < processedEvents.length - 1 ||
                   (isLoading && index === processedEvents.length - 1) ? (
@@ -290,7 +411,8 @@ export function ActivityTimeline({
                     </p>
                   </div>
                 </div>
-              ))}              {isLoading && processedEvents.length > 0 && (
+              ))}
+              {isLoading && processedEvents.length > 0 && (
                 <div className="relative pl-8 pb-4">
                   <div className="absolute left-0.5 top-2 h-5 w-5 rounded-full bg-muted flex items-center justify-center ring-4 ring-card">
                     <Loader2 className="h-3 w-3 text-muted-foreground animate-spin" />
@@ -306,8 +428,16 @@ export function ActivityTimeline({
               {!isLoading && processedEvents.length > 0 && (
                 <div className="relative pl-8 pb-2">
                   <div className="absolute left-0.5 top-2 h-5 w-5 rounded-full bg-green-500/20 flex items-center justify-center ring-4 ring-card border border-green-500/30">
-                    <svg className="h-3 w-3 text-green-400" fill="currentColor" viewBox="0 0 20 20">
-                      <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                    <svg
+                      className="h-3 w-3 text-green-400"
+                      fill="currentColor"
+                      viewBox="0 0 20 20"
+                    >
+                      <path
+                        fillRule="evenodd"
+                        d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                        clipRule="evenodd"
+                      />
                     </svg>
                   </div>
                   <div>
@@ -315,12 +445,15 @@ export function ActivityTimeline({
                       ✅ Research Complete
                     </p>
                     <p className="text-xs text-muted-foreground">
-                      {processedEvents.length} research {processedEvents.length === 1 ? 'step' : 'steps'} completed successfully
+                      {processedEvents.length} research{" "}
+                      {processedEvents.length === 1 ? "step" : "steps"} completed
+                      successfully
                     </p>
                   </div>
                 </div>
               )}
-            </div>          ) : !isLoading ? ( // Only show "No activity" if not loading and no events
+            </div>
+          ) : !isLoading ? ( // Only show "No activity" if not loading and no events
             <div className="flex flex-col items-center justify-center h-full text-muted-foreground pt-10">
               <Info className="h-6 w-6 mb-3" />
               <p className="text-sm">No activity to display.</p>

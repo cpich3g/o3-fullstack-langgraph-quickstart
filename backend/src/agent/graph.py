@@ -60,8 +60,8 @@ def generate_query(state: OverallState, config: RunnableConfig) -> QueryGenerati
     completion = openai_client.chat.completions.create(
         model=configurable.query_generator_model,
         messages=[{"role": "system", "content": formatted_prompt}],
-        # temperature=1.0,
-        # max_tokens=256,
+        temperature=1.0,
+        max_tokens=256,
     )
     # Parse output (assuming output is a JSON list of queries)
     import json

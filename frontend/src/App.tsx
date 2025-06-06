@@ -14,9 +14,7 @@ export default function App() {
     Record<string, ProcessedEvent[]>
   >({});
   const scrollAreaRef = useRef<HTMLDivElement>(null);
-  const hasFinalizeEventOccurredRef = useRef(false);
-
-  const thread = useStream<{
+  const hasFinalizeEventOccurredRef = useRef(false);  const thread = useStream<{
     messages: Message[];
     initial_search_query_count: number;
     max_research_loops: number;
@@ -24,9 +22,9 @@ export default function App() {
   }>({
     apiUrl: import.meta.env.DEV
       ? "http://localhost:2024"
-      : "http://localhost:8123",
+      : "http://localhost:8000",
     assistantId: "agent",
-    messagesKey: "messages",    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    messagesKey: "messages",// eslint-disable-next-line @typescript-eslint/no-explicit-any
     onFinish: (event: any) => {
       console.log(event);
     },

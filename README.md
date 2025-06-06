@@ -1,15 +1,15 @@
-# Azure AI Research Assistant
+# O3-Mini LangGraph Research Assistant
 
-A sophisticated fullstack application powered by Azure AI models and LangGraph for intelligent web research. This research assistant performs comprehensive analysis on user queries by dynamically generating search terms, conducting web research, reflecting on results to identify knowledge gaps, and iteratively refining its approach to deliver well-supported answers with citations.
+A sophisticated fullstack application powered by Azure OpenAI's **O3-mini** models and LangGraph for intelligent web research. This research assistant performs comprehensive analysis on user queries by dynamically generating search terms, conducting web research, reflecting on results to identify knowledge gaps, and iteratively refining its approach to deliver well-supported answers with citations.
 
-![Azure AI Research Assistant](./app.png)
+![O3-Mini Research Assistant](./app.png)
 
 ## Features
 
 - 💬 **Modern Fullstack Architecture** - React frontend with TypeScript and LangGraph-powered backend
-- 🤖 **Azure AI Integration** - Powered by cutting-edge GPT-4.1 and o3 models for superior reasoning
+- 🤖 **O3-Mini Integration** - Powered by Azure OpenAI's latest O3-mini models for superior reasoning
 - 🔍 **Intelligent Research** - Dynamic search query generation and iterative refinement
-- 🌐 **Web Research Engine** - Integrated Google Search API with smart content analysis
+- 🌐 **Web Research Engine** - Integrated Tavily Search API with smart content analysis
 - 🧠 **Reflective AI** - Self-analyzing system that identifies knowledge gaps and adapts strategies
 - 📚 **Source Citations** - Comprehensive answers with proper attribution and references
 - ⚡ **Real-time Updates** - Live progress tracking with activity timeline
@@ -18,16 +18,15 @@ A sophisticated fullstack application powered by Azure AI models and LangGraph f
 ## Project Structure
 
 ```
-📦 azure-ai-research-assistant/
+📦 o3-fullstack-langgraph-quickstart/
 ├── 🎨 frontend/          # React + TypeScript + Tailwind CSS
-│   ├── src/
-│   │   ├── components/   # UI components with modern design
-│   │   └── ...
-├── 🤖 backend/           # LangGraph + FastAPI + Azure AI
+│   ├── src/components/   # UI components with modern design
+│   └── ...
+├── 🤖 backend/           # LangGraph + FastAPI + Azure OpenAI O3-mini
 │   ├── src/agent/       # Research agent logic
 │   │   ├── graph.py     # LangGraph workflow
-│   │   ├── tools.py     # Web research tools
-│   │   └── ...
+│   │   ├── configuration.py  # O3-mini model configuration
+│   │   └── tools.py     # Web research tools
 └── 🐳 Deployment files  # Docker & docker-compose
 ```
 
@@ -37,11 +36,12 @@ A sophisticated fullstack application powered by Azure AI models and LangGraph f
 
 - **Node.js** 18+ and npm
 - **Python** 3.8+
-- **Azure OpenAI API Key** with access to GPT-4.1 and o3 models
+- **Azure OpenAI API Key** with access to O3-mini models
+- **Tavily Search API Key** for web research (optional)
 
 ### Environment Setup
 
-1. **Configure Azure AI credentials:**
+1. **Configure Azure OpenAI credentials:**
    ```bash
    cd backend
    cp .env.example .env
@@ -51,7 +51,8 @@ A sophisticated fullstack application powered by Azure AI models and LangGraph f
    ```env
    AZURE_OPENAI_API_KEY="your_azure_openai_api_key"
    AZURE_OPENAI_ENDPOINT="https://your-resource.openai.azure.com/"
-   AZURE_OPENAI_API_VERSION="2024-02-15-preview"
+   AZURE_OPENAI_API_VERSION="2024-12-01-preview"
+   TAVILY_API_KEY="your_tavily_api_key"  # Optional for web research
    ```
 
 ### Installation & Development
@@ -80,21 +81,21 @@ A sophisticated fullstack application powered by Azure AI models and LangGraph f
 
 ## How It Works
 
-The research assistant uses a sophisticated multi-step approach powered by Azure AI models:
+The research assistant uses a sophisticated multi-step approach powered by Azure OpenAI O3-mini models:
 
 ![Agent Research Flow](./agent.png)
 
 ### 🎯 **Intelligent Query Planning**
-- **GPT-4.1** analyzes user input and generates strategic search queries
+- **O3-mini** analyzes user input and generates strategic search queries
 - Advanced prompt engineering ensures comprehensive coverage of topics
 
 ### 🔍 **Adaptive Web Research**
-- Executes targeted web searches using Google Search API
-- **o3 model** processes and analyzes search results for relevance and quality
+- Executes targeted web searches using Tavily Search API
+- **O3-mini** processes and analyzes search results for relevance and quality
 - Extracts key information while maintaining source attribution
 
 ### 🧠 **Reflective Analysis**
-- **o3's reasoning capabilities** identify knowledge gaps and inconsistencies
+- **O3-mini's reasoning capabilities** identify knowledge gaps and inconsistencies
 - Determines if additional research is needed or if information is sufficient
 - Self-correcting mechanism improves research quality iteratively
 
@@ -104,7 +105,7 @@ The research assistant uses a sophisticated multi-step approach powered by Azure
 - Configurable loop limits prevent infinite iterations
 
 ### 📝 **Synthesis & Response**
-- **GPT-4.1** synthesizes gathered information into coherent, well-structured answers
+- **O3-mini** synthesizes gathered information into coherent, well-structured answers
 - Includes proper citations and source references
 - Maintains factual accuracy while ensuring readability
 
@@ -113,38 +114,56 @@ The research assistant uses a sophisticated multi-step approach powered by Azure
 The application is production-ready with Docker support and requires Redis and PostgreSQL for LangGraph operations.
 
 ### Prerequisites
+- **Docker & Docker Compose** - For containerized deployment
 - **Redis** - Message broker for real-time streaming
 - **PostgreSQL** - Data persistence and state management
-- **LangSmith API Key** - For monitoring and observability (optional)
+- **Azure OpenAI** - O3-mini model access
 
 ### Docker Deployment
 
-1. **Build the production image:**
+1. **Build the production containers:**
    ```bash
-   docker build -t azure-ai-research-assistant -f Dockerfile .
+   docker-compose -f docker-compose.production.yml build --no-cache
    ```
 
 2. **Configure environment variables:**
    ```bash
-   # Copy and update with your credentials
+   # Copy and update with your Azure OpenAI credentials
    cp .env.example .env
    ```
 
 3. **Deploy with docker-compose:**
    ```bash
-   AZURE_OPENAI_API_KEY=<key> LANGSMITH_API_KEY=<key> docker-compose up
+   docker-compose -f docker-compose.production.yml up -d
    ```
 
 4. **Access the application:**
-   - Application: `http://localhost:8123/app/`
-   - API: `http://localhost:8123`
+   - Application: `http://localhost:8000/app/`
+   - API: `http://localhost:8000`
 
 ### Environment Configuration
 
 Update `frontend/src/App.tsx` with your deployment URL:
 - **Development:** `http://localhost:2024`
-- **Docker:** `http://localhost:8123`
+- **Docker:** `http://localhost:8000`
 - **Production:** Your domain/IP address
+
+## Model Configuration
+
+The application uses specific O3-mini model configurations defined in `backend/src/agent/configuration.py`:
+
+```python
+# Default O3-mini model configuration
+query_generator_model: str = "gpt-4.1-mini"    # Search query generation
+reflection_model: str = "o4-mini"              # Research gap analysis
+answer_model: str = "gpt-4.1-mini"             # Final response synthesis
+reasoning_model: str = "o4-mini"               # Iterative reasoning
+```
+
+**Azure OpenAI Deployment Setup:**
+1. Deploy the required O3-mini models in your Azure OpenAI resource
+2. Use the deployment names that match the configuration above
+3. Ensure your API version supports O3-mini models: `2024-12-01-preview`
 
 ## Technology Stack
 
@@ -157,34 +176,36 @@ Update `frontend/src/App.tsx` with your deployment URL:
 ### Backend
 - **[LangGraph](https://github.com/langchain-ai/langgraph)** - Advanced agent workflow orchestration
 - **[FastAPI](https://fastapi.tiangolo.com/)** - High-performance Python web framework
-- **[Azure OpenAI](https://azure.microsoft.com/en-us/products/ai-services/openai-service)** - GPT-4.1 & o3 models for reasoning and generation
+- **[Azure OpenAI](https://azure.microsoft.com/en-us/products/ai-services/openai-service)** - O3-mini models for reasoning and generation
+- **[Tavily](https://tavily.com/)** - Web search and research API
 
 ### Infrastructure
 - **[Docker](https://www.docker.com/)** - Containerized deployment
 - **[Redis](https://redis.io/)** - Real-time message streaming
 - **[PostgreSQL](https://www.postgresql.org/)** - Persistent data storage
 
-## Azure AI Models
+## Azure OpenAI O3-Mini Models
 
-This application leverages Microsoft's most advanced AI models:
+This application leverages Microsoft's latest O3-mini models for enhanced reasoning:
 
-### 🚀 **GPT-4.1**
-- **Superior Language Understanding** - Enhanced comprehension of complex queries
-- **Advanced Reasoning** - Multi-step logical analysis and synthesis
-- **Context Awareness** - Maintains coherent conversation across long interactions
+### 🚀 **O3-Mini Models Configuration**
+- **Query Generation**: `gpt-4.1-mini` - Strategic search query formulation
+- **Reflection & Reasoning**: `o4-mini` - Advanced analytical capabilities and gap identification  
+- **Answer Synthesis**: `gpt-4.1-mini` - Coherent response generation with citations
 
-### 🧠 **o3 Model**
-- **Next-Generation Reasoning** - State-of-the-art analytical capabilities
-- **Deep Research Analysis** - Identifies subtle patterns and knowledge gaps
-- **Self-Reflection** - Advanced meta-cognitive abilities for iterative improvement
+### 🧠 **O3-Mini Capabilities**
+- **Advanced Reasoning** - Superior logical analysis and problem-solving
+- **Context Awareness** - Maintains coherent analysis across complex research topics
+- **Self-Reflection** - Meta-cognitive abilities for iterative research improvement
+- **Efficient Processing** - Optimized performance for real-time research workflows
 
 ## Key Benefits
 
-✅ **Enterprise-Grade Reliability** - Built on Azure's robust infrastructure  
-✅ **Advanced AI Capabilities** - Cutting-edge reasoning with GPT-4.1 and o3  
-✅ **Real-Time Research** - Live web data integration with smart analysis  
+✅ **Latest AI Technology** - Built with Azure OpenAI's cutting-edge O3-mini models  
+✅ **Advanced Reasoning** - State-of-the-art analytical and reflection capabilities  
+✅ **Real-Time Research** - Live web data integration with smart content analysis  
 ✅ **Accurate Citations** - Proper source attribution and fact verification  
-✅ **Scalable Architecture** - Production-ready with Docker deployment  
+✅ **Production Ready** - Docker deployment with Redis and PostgreSQL support  
 ✅ **Modern UI/UX** - Intuitive interface with real-time progress tracking
 
 ## Contributing

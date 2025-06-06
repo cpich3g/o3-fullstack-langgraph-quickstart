@@ -4,9 +4,15 @@ FROM node:20-alpine AS frontend-builder
 
 WORKDIR /app/frontend
 
+# Install build dependencies
+RUN apk add --no-cache python3 make g++
+
 # Copy package files first for better caching
 COPY frontend/package*.json ./
-RUN npm ci --only=production
+
+# Clear npm cache and install dependencies with proper platform targeting
+RUN npm cache clean --force && \
+    npm ci --include=dev --platform=linux --arch=x64
 
 # Copy source and build
 COPY frontend/ ./
@@ -23,6 +29,7 @@ ENV PATH="/root/.local/bin:$PATH"
 
 # Copy built frontend
 COPY --from=frontend-builder /app/frontend/dist /deps/frontend/dist
+COPY frontend/public /deps/frontend/public
 
 # Copy backend code
 COPY backend/ /deps/backend/
@@ -49,6 +56,9 @@ RUN uv pip uninstall --system pip setuptools wheel && \
     find /usr/local/bin -name "pip*" -delete
 
 WORKDIR /deps/backend
+
+# Add current directory to Python path
+ENV PYTHONPATH="/deps/backend:$PYTHONPATH"
 
 # Expose port for LangGraph API
 EXPOSE 8000

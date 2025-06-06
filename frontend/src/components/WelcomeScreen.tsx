@@ -29,9 +29,8 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
       <div className="w-full max-w-4xl mx-auto mb-4">
         <div className="relative group">
           <div className="absolute inset-0 bg-gradient-to-r from-blue-500/10 via-purple-500/10 to-indigo-500/10 rounded-2xl blur-xl opacity-70 group-hover:opacity-100 transition-opacity duration-500"></div>
-          <div className="relative bg-card/20 backdrop-blur-sm rounded-2xl border border-border/30 p-4 shadow-lg hover:shadow-m transition-all duration-300">
-            <img 
-              src="public/deep-banner.png" 
+          <div className="relative bg-card/20 backdrop-blur-sm rounded-2xl border border-border/30 p-4 shadow-lg hover:shadow-m transition-all duration-300">            <img 
+              src="/deep-banner.png" 
               alt="Deep Research Banner" 
               className="w-full h-max max-h-24 md:max-h-32 lg:max-h-36 object-cover rounded-xl drop-shadow-lg hover:drop-shadow-m transition-all duration-300"
             />
