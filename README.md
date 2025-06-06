@@ -1,13 +1,13 @@
-# O3-Mini LangGraph Research Assistant
+# Azure AI Deep Research Agent
 
 A sophisticated fullstack application powered by Azure OpenAI's **O3-mini** models and LangGraph for intelligent web research. This research assistant performs comprehensive analysis on user queries by dynamically generating search terms, conducting web research, reflecting on results to identify knowledge gaps, and iteratively refining its approach to deliver well-supported answers with citations.
 
-![O3-Mini Research Assistant](./app.png)
+![Azure AI Deep Research Agent](./app.png)
 
 ## Features
 
 - 💬 **Modern Fullstack Architecture** - React frontend with TypeScript and LangGraph-powered backend
-- 🤖 **O3-Mini Integration** - Powered by Azure OpenAI's latest O3-mini models for superior reasoning
+- 🤖 **Azure AI Integration** - Powered by Azure OpenAI's latest models for superior reasoning
 - 🔍 **Intelligent Research** - Dynamic search query generation and iterative refinement
 - 🌐 **Web Research Engine** - Integrated Tavily Search API with smart content analysis
 - 🧠 **Reflective AI** - Self-analyzing system that identifies knowledge gaps and adapts strategies
@@ -22,10 +22,10 @@ A sophisticated fullstack application powered by Azure OpenAI's **O3-mini** mode
 ├── 🎨 frontend/          # React + TypeScript + Tailwind CSS
 │   ├── src/components/   # UI components with modern design
 │   └── ...
-├── 🤖 backend/           # LangGraph + FastAPI + Azure OpenAI O3-mini
+├── 🤖 backend/           # LangGraph + FastAPI + Azure AI
 │   ├── src/agent/       # Research agent logic
 │   │   ├── graph.py     # LangGraph workflow
-│   │   ├── configuration.py  # O3-mini model configuration
+│   │   ├── configuration.py  # model configuration
 │   │   └── tools.py     # Web research tools
 └── 🐳 Deployment files  # Docker & docker-compose
 ```
@@ -36,7 +36,7 @@ A sophisticated fullstack application powered by Azure OpenAI's **O3-mini** mode
 
 - **Node.js** 18+ and npm
 - **Python** 3.8+
-- **Azure OpenAI API Key** with access to O3-mini models
+- **Azure OpenAI API Key** with access to latest models
 - **Tavily Search API Key** for web research (optional)
 
 ### Environment Setup
@@ -81,21 +81,21 @@ A sophisticated fullstack application powered by Azure OpenAI's **O3-mini** mode
 
 ## How It Works
 
-The research assistant uses a sophisticated multi-step approach powered by Azure OpenAI O3-mini models:
+The research assistant uses a sophisticated multi-step approach powered by Azure AI models:
 
 ![Agent Research Flow](./agent.png)
 
 ### 🎯 **Intelligent Query Planning**
-- **O3-mini** analyzes user input and generates strategic search queries
+- **Azure AI** analyzes user input and generates strategic search queries
 - Advanced prompt engineering ensures comprehensive coverage of topics
 
 ### 🔍 **Adaptive Web Research**
 - Executes targeted web searches using Tavily Search API
-- **O3-mini** processes and analyzes search results for relevance and quality
+- **Azure AI** processes and analyzes search results for relevance and quality
 - Extracts key information while maintaining source attribution
 
 ### 🧠 **Reflective Analysis**
-- **O3-mini's reasoning capabilities** identify knowledge gaps and inconsistencies
+- **Azure AI's reasoning capabilities** identify knowledge gaps and inconsistencies
 - Determines if additional research is needed or if information is sufficient
 - Self-correcting mechanism improves research quality iteratively
 
@@ -105,7 +105,7 @@ The research assistant uses a sophisticated multi-step approach powered by Azure
 - Configurable loop limits prevent infinite iterations
 
 ### 📝 **Synthesis & Response**
-- **O3-mini** synthesizes gathered information into coherent, well-structured answers
+- **Azure AI** synthesizes gathered information into coherent, well-structured answers
 - Includes proper citations and source references
 - Maintains factual accuracy while ensuring readability
 
@@ -117,7 +117,7 @@ The application is production-ready with Docker support and requires Redis and P
 - **Docker & Docker Compose** - For containerized deployment
 - **Redis** - Message broker for real-time streaming
 - **PostgreSQL** - Data persistence and state management
-- **Azure OpenAI** - O3-mini model access
+- **Azure OpenAI** - latest model access
 
 ### Docker Deployment
 
@@ -150,10 +150,10 @@ Update `frontend/src/App.tsx` with your deployment URL:
 
 ## Model Configuration
 
-The application uses specific O3-mini model configurations defined in `backend/src/agent/configuration.py`:
+The application uses specific Azure AI models configurations defined in `backend/src/agent/configuration.py`:
 
 ```python
-# Default O3-mini model configuration
+# Default Azure AI model configuration
 query_generator_model: str = "gpt-4.1-mini"    # Search query generation
 reflection_model: str = "o4-mini"              # Research gap analysis
 answer_model: str = "gpt-4.1-mini"             # Final response synthesis
@@ -161,9 +161,9 @@ reasoning_model: str = "o4-mini"               # Iterative reasoning
 ```
 
 **Azure OpenAI Deployment Setup:**
-1. Deploy the required O3-mini models in your Azure OpenAI resource
+1. Deploy the required Azure AI models in your Azure OpenAI resource
 2. Use the deployment names that match the configuration above
-3. Ensure your API version supports O3-mini models: `2024-12-01-preview`
+3. Ensure your API version supports Azure AI models: `2024-12-01-preview`
 
 ## Technology Stack
 
@@ -184,16 +184,16 @@ reasoning_model: str = "o4-mini"               # Iterative reasoning
 - **[Redis](https://redis.io/)** - Real-time message streaming
 - **[PostgreSQL](https://www.postgresql.org/)** - Persistent data storage
 
-## Azure OpenAI O3-Mini Models
+## Azure OpenAI Models
 
-This application leverages Microsoft's latest O3-mini models for enhanced reasoning:
+This application leverages Azure AI's latest models for enhanced reasoning:
 
-### 🚀 **O3-Mini Models Configuration**
+### 🚀 **Azure AI Models Configuration**
 - **Query Generation**: `gpt-4.1-mini` - Strategic search query formulation
 - **Reflection & Reasoning**: `o4-mini` - Advanced analytical capabilities and gap identification  
 - **Answer Synthesis**: `gpt-4.1-mini` - Coherent response generation with citations
 
-### 🧠 **O3-Mini Capabilities**
+### 🧠 **Azure AI Capabilities**
 - **Advanced Reasoning** - Superior logical analysis and problem-solving
 - **Context Awareness** - Maintains coherent analysis across complex research topics
 - **Self-Reflection** - Meta-cognitive abilities for iterative research improvement
@@ -201,7 +201,7 @@ This application leverages Microsoft's latest O3-mini models for enhanced reason
 
 ## Key Benefits
 
-✅ **Latest AI Technology** - Built with Azure OpenAI's cutting-edge O3-mini models  
+✅ **Latest AI Technology** - Built with Azure OpenAI's cutting-edge models  
 ✅ **Advanced Reasoning** - State-of-the-art analytical and reflection capabilities  
 ✅ **Real-Time Research** - Live web data integration with smart content analysis  
 ✅ **Accurate Citations** - Proper source attribution and fact verification  
