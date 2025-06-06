@@ -1,6 +1,6 @@
 # Azure AI Deep Research Agent
 
-A sophisticated fullstack application powered by Azure OpenAI's **O3-mini** models and LangGraph for intelligent web research. This research assistant performs comprehensive analysis on user queries by dynamically generating search terms, conducting web research, reflecting on results to identify knowledge gaps, and iteratively refining its approach to deliver well-supported answers with citations.
+A sophisticated fullstack application powered by **Azure AI** models and LangGraph for intelligent web research. This research assistant performs comprehensive analysis on user queries by dynamically generating search terms, conducting web research, reflecting on results to identify knowledge gaps, and iteratively refining its approach to deliver well-supported answers with citations.
 
 ![Azure AI Deep Research Agent](./app.png)
 
