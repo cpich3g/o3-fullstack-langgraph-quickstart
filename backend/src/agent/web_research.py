@@ -39,7 +39,7 @@ class WebResearchTool:
                 self.tavily_tool = TavilySearch(
                     max_results=10,
                     topic="general",
-                    include_answer=False,
+                    include_answer=True,
                     include_raw_content=True,
                     search_depth="advanced"
                 )
@@ -59,7 +59,7 @@ class WebResearchTool:
                     self.tavily_tool = TavilySearch(
                         max_results=10,
                         topic="general",
-                        include_answer=False,
+                        include_answer=True,
                         include_raw_content=True,
                         search_depth="advanced"
                     )
