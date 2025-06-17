@@ -540,7 +540,7 @@ export function ChatMessagesView({
                 </svg>
               </div>
               <div>
-                <h1 className="text-xl font-bold text-foreground">AI Research Assistant</h1>
+                <h1 className="text-xl font-bold text-foreground">Deep Research</h1>
                 <p className="text-sm text-muted-foreground">Powered by Azure AI</p>
               </div>
             </div>

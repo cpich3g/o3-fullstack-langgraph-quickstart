@@ -59,7 +59,7 @@ def generate_query(state: OverallState, config: RunnableConfig) -> QueryGenerati
 
     completion = openai_client.chat.completions.create(
         model=configurable.query_generator_model,
-        messages=[{"role": "system", "content": formatted_prompt}],
+        messages=[{"role": "user", "content": formatted_prompt}],
         temperature=1.0,
         max_tokens=500,
     )
@@ -93,7 +93,7 @@ async def web_research(state: WebSearchState, config: RunnableConfig) -> Overall
     
     completion = openai_client.chat.completions.create(
         model=configurable.query_generator_model,
-        messages=[{"role": "system", "content": formatted_prompt}],
+        messages=[{"role": "user", "content": formatted_prompt}],
         temperature=0,
         max_tokens=1024,
     )
@@ -144,9 +144,9 @@ def reflection(state: OverallState, config: RunnableConfig) -> ReflectionState:
     )
     completion = openai_client.chat.completions.create(
         model=reasoning_model,
-        messages=[{"role": "system", "content": formatted_prompt}],
+        messages=[{"role": "user", "content": formatted_prompt}],
         # max_tokens=100000,
-        temperature=0.7,
+        # temperature=0.7,
         reasoning_effort="high",
     )
     import json
@@ -219,8 +219,8 @@ def finalize_answer(state: OverallState, config: RunnableConfig):
     )
     completion = openai_client.chat.completions.create(
         model=reasoning_model,
-        messages=[{"role": "system", "content": formatted_prompt}],
-        temperature=0.4,
+        messages=[{"role": "user", "content": formatted_prompt}],
+        # temperature=0.4,
         reasoning_effort="high",
     )
     content = completion.choices[0].message.content

@@ -145,10 +145,6 @@ export default function App() {
       setProcessedEventsTimeline([]);
       hasFinalizeEventOccurredRef.current = false;
 
-      // convert effort to, initial_search_query_count and max_research_loops
-      // low means max 1 loop and 1 query
-      // medium means max 3 loops and 3 queries
-      // high means max 10 loops and 5 queries
       let initial_search_query_count = 0;
       let max_research_loops = 0;
       switch (effort) {
@@ -161,8 +157,8 @@ export default function App() {
           max_research_loops = 3;
           break;
         case "high":
-          initial_search_query_count = 5;
-          max_research_loops = 10;
+          initial_search_query_count = 10;
+          max_research_loops = 30;
           break;
       }
 
