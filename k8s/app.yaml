@@ -14,9 +14,11 @@ spec:
       labels:
         app: deep-research
     spec:
+      imagePullSecrets:
+        - name: acr-secret
       containers:
         - name: deep-research
-          image: <ACR_NAME>.azurecr.io/deepresearchai:latest
+          image: jjacrdemo01.azurecr.io/deepresearchai:latest
           ports:
             - containerPort: 8000
           envFrom:
@@ -31,17 +33,22 @@ spec:
                   name: deep-research-secret
                   key: POSTGRES_PASSWORD
             - name: POSTGRES_URL
-              value: postgresql://langgraph:$(POSTGRES_PASSWORD)@postgres:5432/langgraph
+              value: postgresql://langgraph:langgraph@postgres:5432/langgraph
             - name: DATABASE_URI
-              value: postgresql://langgraph:$(POSTGRES_PASSWORD)@postgres:5432/langgraph
+              value: postgresql://langgraph:langgraph@postgres:5432/langgraph
             - name: LANGGRAPH_DATABASE_URL
-              value: postgresql://langgraph:$(POSTGRES_PASSWORD)@postgres:5432/langgraph
+              value: postgresql://langgraph:langgraph@postgres:5432/langgraph
             - name: LANGGRAPH_REDIS_URL
               value: redis://redis:6379
             - name: REDIS_URL
               value: redis://redis:6379
             - name: REDIS_URI
               value: redis://redis:6379
+            - name: LANGSMITH_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: deep-research-secret
+                  key: LANGGRAPH_API_KEY
       restartPolicy: Always
 ---
 apiVersion: v1
@@ -51,7 +58,7 @@ metadata:
 spec:
   type: LoadBalancer
   ports:
-    - port: 8000
+    - port: 80
       targetPort: 8000
   selector:
     app: deep-research

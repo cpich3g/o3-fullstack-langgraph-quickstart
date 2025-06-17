@@ -18,6 +18,12 @@ This folder contains manifests and a helper script to deploy the application to 
 3. Run the deploy script:
 
 ```bash
+# Install NGINX Ingress Controller
+kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/controller-v1.8.1/deploy/static/provider/cloud/deploy.yaml
+```
+
+
+```bash
 ./k8s/deploy-aks.sh <resource-group> <acr-name> <aks-name>
 ```
 

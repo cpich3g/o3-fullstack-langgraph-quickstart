@@ -25,6 +25,13 @@ spec:
       labels:
         app: postgres
     spec:
+      initContainers:
+        - name: postgres-init
+          image: busybox
+          command: ['sh', '-c', 'rm -rf /var/lib/postgresql/data/*']
+          volumeMounts:
+            - name: data
+              mountPath: /var/lib/postgresql/data
       containers:
         - name: postgres
           image: postgres:16-alpine
@@ -34,10 +41,9 @@ spec:
             - name: POSTGRES_USER
               value: langgraph
             - name: POSTGRES_PASSWORD
-              valueFrom:
-                secretKeyRef:
-                  name: deep-research-secret
-                  key: POSTGRES_PASSWORD
+              value: langgraph
+            - name: PGDATA
+              value: /var/lib/postgresql/data/pgdata
           ports:
             - containerPort: 5432
           volumeMounts:
