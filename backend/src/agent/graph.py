@@ -56,12 +56,12 @@ def generate_query(state: OverallState, config: RunnableConfig) -> QueryGenerati
         research_topic=get_research_topic(state["messages"]),
         number_queries=state["initial_search_query_count"],
     )
-    # Call Azure OpenAI o3 model for query generation
+
     completion = openai_client.chat.completions.create(
         model=configurable.query_generator_model,
         messages=[{"role": "system", "content": formatted_prompt}],
         temperature=1.0,
-        max_tokens=256,
+        max_tokens=500,
     )
     # Parse output (assuming output is a JSON list of queries)
     import json
@@ -91,12 +91,11 @@ async def web_research(state: WebSearchState, config: RunnableConfig) -> Overall
         research_topic=state["search_query"],
     )
     
-    # Call Azure OpenAI o3 model for initial web research
     completion = openai_client.chat.completions.create(
         model=configurable.query_generator_model,
         messages=[{"role": "system", "content": formatted_prompt}],
-        # temperature=0,
-        # max_tokens=1024,
+        temperature=0,
+        max_tokens=1024,
     )
     ai_generated_text = completion.choices[0].message.content
       # Enhance with real web data if search engines are available and enabled
@@ -146,7 +145,8 @@ def reflection(state: OverallState, config: RunnableConfig) -> ReflectionState:
     completion = openai_client.chat.completions.create(
         model=reasoning_model,
         messages=[{"role": "system", "content": formatted_prompt}],
-        # temperature=1.0,
+        # max_tokens=100000,
+        temperature=0.7,
         reasoning_effort="high",
     )
     import json
@@ -220,8 +220,8 @@ def finalize_answer(state: OverallState, config: RunnableConfig):
     completion = openai_client.chat.completions.create(
         model=reasoning_model,
         messages=[{"role": "system", "content": formatted_prompt}],
-        # temperature=0,
-        reasoning_effort="medium",
+        temperature=0.4,
+        reasoning_effort="high",
     )
     content = completion.choices[0].message.content
     unique_sources = []

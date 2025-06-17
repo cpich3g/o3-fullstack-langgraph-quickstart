@@ -16,7 +16,7 @@ class Configuration(BaseModel):
     )
 
     reflection_model: str = Field(
-        default="o4-mini",
+        default="o3",
         metadata={
             "description": "The name of the Azure OpenAI o3 model to use for reflection."
         },
@@ -30,7 +30,7 @@ class Configuration(BaseModel):
     )
 
     reasoning_model: str = Field(
-        default="o4-mini",
+        default="o3",
         metadata={
             "description": "The name of the Azure OpenAI o3 model to use for reasoning and reflection."
         },

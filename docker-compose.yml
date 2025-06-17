@@ -28,7 +28,7 @@ services:
   langgraph-api:
     image: gemini-fullstack-langgraph
     ports:
-      - "8123:8001"
+      - "8123:8000"
     depends_on:
       langgraph-redis:
         condition: service_healthy

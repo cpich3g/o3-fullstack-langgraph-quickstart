@@ -37,7 +37,7 @@ class WebResearchTool:
         if self.search_engine == "tavily" and self.tavily_key and TAVILY_AVAILABLE:
             try:
                 self.tavily_tool = TavilySearch(
-                    max_results=10,
+                    max_results=20,
                     topic="general",
                     include_answer=True,
                     include_raw_content=True,
@@ -57,7 +57,7 @@ class WebResearchTool:
             if self.tavily_key and TAVILY_AVAILABLE:
                 try:
                     self.tavily_tool = TavilySearch(
-                        max_results=10,
+                        max_results=20,
                         topic="general",
                         include_answer=True,
                         include_raw_content=True,
