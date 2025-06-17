@@ -1,0 +1,57 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: deep-research-app
+  labels:
+    app: deep-research
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: deep-research
+  template:
+    metadata:
+      labels:
+        app: deep-research
+    spec:
+      containers:
+        - name: deep-research
+          image: <ACR_NAME>.azurecr.io/deepresearchai:latest
+          ports:
+            - containerPort: 8000
+          envFrom:
+            - configMapRef:
+                name: deep-research-config
+            - secretRef:
+                name: deep-research-secret
+          env:
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: deep-research-secret
+                  key: POSTGRES_PASSWORD
+            - name: POSTGRES_URL
+              value: postgresql://langgraph:$(POSTGRES_PASSWORD)@postgres:5432/langgraph
+            - name: DATABASE_URI
+              value: postgresql://langgraph:$(POSTGRES_PASSWORD)@postgres:5432/langgraph
+            - name: LANGGRAPH_DATABASE_URL
+              value: postgresql://langgraph:$(POSTGRES_PASSWORD)@postgres:5432/langgraph
+            - name: LANGGRAPH_REDIS_URL
+              value: redis://redis:6379
+            - name: REDIS_URL
+              value: redis://redis:6379
+            - name: REDIS_URI
+              value: redis://redis:6379
+      restartPolicy: Always
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: deep-research-app
+spec:
+  type: LoadBalancer
+  ports:
+    - port: 8000
+      targetPort: 8000
+  selector:
+    app: deep-research
