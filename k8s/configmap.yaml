@@ -1,0 +1,11 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: deep-research-config
+data:
+  AZURE_OPENAI_ENDPOINT: ""
+  AZURE_OPENAI_API_VERSION: "2024-02-01"
+  AZURE_OPENAI_DEPLOYMENT_NAME: "gpt-4o"
+  SEARCH_ENGINE_ID: ""
+  LOG_LEVEL: "INFO"
+  CORS_ALLOW_ORIGINS: "*"
