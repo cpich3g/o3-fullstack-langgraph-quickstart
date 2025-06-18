@@ -587,6 +587,7 @@ interface ChatMessagesViewProps {
   onCancel: () => void;
   liveActivityEvents: ProcessedEvent[];
   historicalActivities: Record<string, ProcessedEvent[]>;
+  textareaRef: React.RefObject<HTMLTextAreaElement | null>;
 }
 
 export function ChatMessagesView({
@@ -597,6 +598,7 @@ export function ChatMessagesView({
   onCancel,
   liveActivityEvents,
   historicalActivities,
+  textareaRef,
 }: ChatMessagesViewProps) {
   const [copiedMessageId, setCopiedMessageId] = useState<string | null>(null);
 
@@ -761,6 +763,7 @@ export function ChatMessagesView({
           isLoading={isLoading}
           onCancel={onCancel}
           hasHistory={messages.length > 0}
+          textareaRef={textareaRef}
         />
       </div>
     </div>

@@ -15,13 +15,15 @@ interface AdvancedInputFormProps {
   isLoading: boolean;
   onCancel: () => void;
   hasHistory?: boolean;
+  textareaRef?: React.RefObject<HTMLTextAreaElement | null>;
 }
 
 export function AdvancedInputForm({
   onSubmit,
   isLoading,
   onCancel,
-  hasHistory = false
+  hasHistory = false,
+  textareaRef
 }: AdvancedInputFormProps) {
   const [inputValue, setInputValue] = useState("");
   const [selectedEffort, setSelectedEffort] = useState("medium");
@@ -50,8 +52,8 @@ export function AdvancedInputForm({
         <CardContent className="p-4">
           <div className="space-y-4">
             {/* Text Input */}
-            <div className="relative">
-              <Textarea
+            <div className="relative">              <Textarea
+                ref={textareaRef}
                 value={inputValue}
                 onChange={(e) => setInputValue(e.target.value)}
                 onKeyDown={handleKeyPress}

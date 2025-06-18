@@ -1,4 +1,5 @@
 import { AdvancedInputForm } from "./AdvancedInputForm";
+import { RefObject } from "react";
 
 interface WelcomeScreenProps {
   handleSubmit: (
@@ -7,12 +8,14 @@ interface WelcomeScreenProps {
   ) => void;
   onCancel: () => void;
   isLoading: boolean;
+  textareaRef: RefObject<HTMLTextAreaElement | null>;
 }
 
 export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
   handleSubmit,
   onCancel,
   isLoading,
+  textareaRef,
 }) => {return (    <div className="flex flex-col items-center justify-center text-center px-6 flex-1 w-full mx-auto gap-8 relative">
       
       <div className="space-y-6">
@@ -71,7 +74,8 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
           isLoading={isLoading}
           onCancel={onCancel}
           hasHistory={false}
-        />      </div>
+          textareaRef={textareaRef}
+        /></div>
 
       <p className="text-sm text-muted-foreground mt-4 flex items-center gap-2">
         <svg className="w-4 h-4 text-blue-400" fill="currentColor" viewBox="0 0 20 20">
