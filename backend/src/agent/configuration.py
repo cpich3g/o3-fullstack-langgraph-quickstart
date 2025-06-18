@@ -66,6 +66,65 @@ class Configuration(BaseModel):
         metadata={"description": "The maximum number of research loops to perform."},
     )
 
+    # Code Interpreter settings
+    enable_code_interpreter: bool = Field(
+        default=True,
+        metadata={
+            "description": "Whether to enable Azure Code Interpreter for data analysis and calculations."
+        },
+    )
+
+    code_interpreter_model: str = Field(
+        default="gpt-4.1-mini",
+        metadata={
+            "description": "The Azure OpenAI model to use for code interpretation tasks."
+        },
+    )
+
+    # Azure Container Apps Dynamic Sessions settings
+    pool_management_endpoint: str = Field(
+        default="",
+        metadata={
+            "description": "Azure Container Apps dynamic sessions pool management endpoint URL."
+        },
+    )
+
+    use_azure_sessions: bool = Field(
+        default=True,
+        metadata={
+            "description": "Whether to use Azure Container Apps dynamic sessions for code execution."
+        },
+    )
+
+    azure_sessions_no_auth: bool = Field(
+        default=False,
+        metadata={
+            "description": "Set to True if the Azure Container Apps sessions endpoint is public and doesn't require authentication."
+        },
+    )
+
+    # Report Generator settings
+    enable_report_generator: bool = Field(
+        default=True,
+        metadata={
+            "description": "Whether to generate a comprehensive markdown report."
+        },
+    )
+
+    report_generator_model: str = Field(
+        default="gpt-4.1-mini",
+        metadata={
+            "description": "The Azure OpenAI model to use for report generation."
+        },
+    )
+
+    report_format: str = Field(
+        default="markdown",
+        metadata={
+            "description": "The format for the final report. Options: 'markdown', 'html'."
+        },
+    )
+
     @classmethod
     def from_runnable_config(
         cls, config: Optional[RunnableConfig] = None

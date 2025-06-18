@@ -114,6 +114,21 @@
   body {
     @apply bg-background text-foreground;
   }
+  
+  /* Better text wrapping for long content */
+  .break-anywhere {
+    word-break: break-word;
+    overflow-wrap: anywhere;
+    hyphens: auto;
+  }
+  
+  /* Ensure containers don't overflow */
+  .container-safe {
+    max-width: 100%;
+    overflow-wrap: break-word;
+    word-wrap: break-word;
+    word-break: break-word;
+  }
 }
 
 /* Animation Delays */

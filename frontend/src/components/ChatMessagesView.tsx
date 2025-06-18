@@ -1,7 +1,7 @@
 import type React from "react";
 import type { Message } from "@langchain/langgraph-sdk";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Loader2, Copy, CopyCheck } from "lucide-react";
+import { Copy, CopyCheck } from "lucide-react";
 import { InputForm } from "@/components/InputForm";
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
@@ -10,6 +10,7 @@ import remarkGfm from "remark-gfm";
 import { cn } from "@/lib/utils";
 import { SourcesDisplay } from "@/components/SourcesDisplay";
 import { ThemeToggle } from "@/components/ThemeToggle";
+import { TypingAnimation } from "@/components/TypingAnimation";
 import {
   ActivityTimeline,
   ProcessedEvent,
@@ -35,6 +36,23 @@ interface StructuredMessageContent {
       status: string;
     }>;
   };
+  code_analysis_results?: Array<{
+    type?: string;
+    insights?: string;
+    results?: string;
+    code_executed?: string;
+    visualizations?: Array<{
+      type: string;
+      format: string;
+      base64_data: string;
+      description: string;
+    }>;
+    errors?: string;
+    execution_method?: string;
+  }>;
+  has_visualizations?: boolean;
+  analysis_performed?: boolean;
+  report_type?: string;
 }
 
 // Helper function to check if additional_kwargs contains structured content
@@ -62,9 +80,8 @@ const mdComponents = {
     <h3 className={cn("text-lg font-semibold mt-4 mb-2 text-foreground", className)} {...props}>
       {children}
     </h3>
-  ),
-  p: ({ className, children, ...props }: React.ComponentPropsWithoutRef<"p">) => (
-    <p className={cn("mb-4 leading-relaxed text-foreground", className)} {...props}>
+  ),  p: ({ className, children, ...props }: React.ComponentPropsWithoutRef<"p">) => (
+    <p className={cn("mb-4 leading-relaxed text-foreground break-words overflow-wrap-anywhere", className)} {...props}>
       {children}
     </p>
   ),
@@ -131,11 +148,10 @@ const mdComponents = {
     >
       {children}
     </code>
-  ),
-  pre: ({ className, children, ...props }: React.ComponentPropsWithoutRef<"pre">) => (
+  ),  pre: ({ className, children, ...props }: React.ComponentPropsWithoutRef<"pre">) => (
     <pre
       className={cn(
-        "bg-muted border border-border p-4 rounded-lg overflow-x-auto font-mono text-sm my-4 text-foreground",
+        "bg-muted border border-border p-4 rounded-lg overflow-x-auto font-mono text-sm my-4 text-foreground whitespace-pre-wrap break-words",
         className
       )}
       {...props}
@@ -146,8 +162,8 @@ const mdComponents = {
   hr: ({ className, ...props }: React.ComponentPropsWithoutRef<"hr">) => (
     <hr className={cn("border-border my-4", className)} {...props} />
   ),  table: ({ className, children, ...props }: React.ComponentPropsWithoutRef<"table">) => (
-    <div className="my-6 overflow-x-auto rounded-lg border border-border bg-card/50">
-      <table className={cn("w-full border-collapse", className)} {...props}>
+    <div className="my-6 overflow-x-auto rounded-lg border border-border bg-card/50 max-w-full">
+      <table className={cn("w-full border-collapse min-w-[600px]", className)} {...props}>
         {children}
       </table>
     </div>
@@ -177,11 +193,10 @@ const mdComponents = {
     >
       {children}
     </th>
-  ),
-  td: ({ className, children, ...props }: React.ComponentPropsWithoutRef<"td">) => (
+  ),  td: ({ className, children, ...props }: React.ComponentPropsWithoutRef<"td">) => (
     <td
       className={cn(
-        "px-4 py-3 text-foreground border-r border-border last:border-r-0 bg-card/30",
+        "px-4 py-3 text-foreground border-r border-border last:border-r-0 bg-card/30 break-words max-w-xs overflow-wrap-anywhere",
         className
       )}
       {...props}
@@ -444,15 +459,98 @@ const AiMessageBubble: React.FC<AiMessageBubbleProps> = ({
 
   const copyContent = typeof message.content === "string" 
     ? message.content 
-    : JSON.stringify(message.content);
+    : JSON.stringify(message.content);  // Extract visualizations from the structured content
+  const getVisualizations = () => {
+    // First check additional_kwargs (primary location)
+    const structuredContent = getStructuredContent(message);
+    
+    // Debug logging
+    if (process.env.NODE_ENV === 'development') {
+      console.log('🔍 Debug: Message visualization extraction', {
+        hasStructuredContent: !!structuredContent,
+        structuredContentKeys: structuredContent ? Object.keys(structuredContent) : [],
+        hasCodeAnalysisResults: !!(structuredContent && structuredContent.code_analysis_results),
+        codeAnalysisResultsLength: structuredContent && structuredContent.code_analysis_results ? structuredContent.code_analysis_results.length : 0,
+      });
+    }
+    
+    if (structuredContent && structuredContent.code_analysis_results && Array.isArray(structuredContent.code_analysis_results)) {
+      const visualizations: Array<{type: string, format: string, base64_data: string, description: string}> = [];
+      
+      structuredContent.code_analysis_results.forEach((result: any, index: number) => {
+        if (result && result.visualizations && Array.isArray(result.visualizations)) {
+          if (process.env.NODE_ENV === 'development') {
+            console.log(`🔍 Debug: Found ${result.visualizations.length} visualizations in result ${index}`);
+          }
+          visualizations.push(...result.visualizations);
+        }
+      });
+      
+      if (process.env.NODE_ENV === 'development') {
+        console.log(`🔍 Debug: Total visualizations extracted: ${visualizations.length}`);
+      }
+      
+      return visualizations;
+    }
+
+    // Fallback: check directly on message object (legacy)
+    const messageWithKwargs = message as Record<string, unknown>;
+    if (messageWithKwargs.code_analysis_results && Array.isArray(messageWithKwargs.code_analysis_results)) {
+      const visualizations: Array<{type: string, format: string, base64_data: string, description: string}> = [];
+      
+      messageWithKwargs.code_analysis_results.forEach((result: any) => {
+        if (result && result.visualizations && Array.isArray(result.visualizations)) {
+          visualizations.push(...result.visualizations);
+        }
+      });
+      
+      return visualizations;
+    }
+    
+    return [];
+  };
+
+  const visualizations = getVisualizations();
 
   return (
-    <div className="relative break-words flex flex-col max-w-none">
-      {/* Main Content */}      <div className="bg-gradient-to-br from-card to-muted rounded-2xl p-6 border border-border/50 shadow-xl backdrop-blur-sm">
-        <ReactMarkdown components={mdComponents} remarkPlugins={[remarkGfm]}>
-          {displayContent}
-        </ReactMarkdown>
+    <div className="relative break-words flex flex-col max-w-none w-full">
+      {/* Main Content */}      <div className="bg-gradient-to-br from-card to-muted rounded-2xl p-6 border border-border/50 shadow-xl backdrop-blur-sm w-full overflow-hidden">
+        <div className="prose prose-sm max-w-none break-words overflow-wrap-anywhere">
+          <ReactMarkdown components={mdComponents} remarkPlugins={[remarkGfm]}>
+            {displayContent}
+          </ReactMarkdown>
+        </div>
       </div>
+
+      {/* Visualizations Section */}
+      {visualizations.length > 0 && (
+        <div className="mt-6 space-y-4">
+          <div className="flex items-center gap-2 mb-4">
+            <div className="p-1.5 bg-blue-500/20 rounded-lg border border-blue-500/30">
+              <svg className="w-4 h-4 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+              </svg>
+            </div>
+            <h4 className="font-semibold text-foreground text-sm">Data Visualizations</h4>
+          </div>
+          
+          {visualizations.map((viz, index) => (
+            <div key={index} className="bg-card/50 rounded-xl border border-border/50 p-4 backdrop-blur-sm">
+              {viz.description && (
+                <p className="text-sm text-muted-foreground mb-3">{viz.description}</p>
+              )}
+              <div className="flex justify-center">
+                <img 
+                  src={`data:image/${viz.format || 'png'};base64,${viz.base64_data}`}
+                  alt={viz.description || `Visualization ${index + 1}`}
+                  className="max-w-full h-auto rounded-lg shadow-md border border-border/30"
+                  style={{maxHeight: '400px'}}
+                />
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
         {/* Sources Display */}
       {structuredContent && structuredContent.sources && structuredContent.sources.length > 0 && (
         <div className="mt-6">
@@ -529,9 +627,8 @@ export function ChatMessagesView({
 
   const lastResearchSummary = getLastResearchSummary();
 
-  return (    <div className="flex flex-col h-full relative">
-      {/* Header/Title Area - Fixed */}      <div className="flex-shrink-0 p-4 border-b border-border/50 bg-background/95 backdrop-blur-sm">
-        <div className="max-w-7xl mx-auto">
+  return (    <div className="flex flex-col h-full relative">      {/* Header/Title Area - Fixed */}      <div className="flex-shrink-0 p-4 border-b border-border/50 bg-background/95 backdrop-blur-sm">
+        <div className="w-full px-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               <div className="p-2 bg-gradient-to-r from-blue-500/20 to-indigo-500/20 rounded-lg border border-blue-500/30">
@@ -547,29 +644,28 @@ export function ChatMessagesView({
             <ThemeToggle />
           </div>
         </div>
-      </div>{/* Two-Column Layout - Scrollable */}
+      </div>      {/* Two-Column Layout - Scrollable */}
       <div className="flex-1 relative overflow-hidden">
-        <div className="flex h-full max-w-7xl mx-auto">
-          {/* Left Column - Chat Messages */}
+        <div className="flex h-full w-full px-4">          {/* Left Column - Chat Messages */}
           <div className="flex-1 min-w-0 pr-4">
             <ScrollArea className="h-full" ref={scrollAreaRef}>
-              <div className="p-6 space-y-6 py-8">                {messages.map((message, index) => {
+              <div className="p-6 space-y-6 py-8 max-w-none">                {messages.map((message, index) => {
                   return (
-                    <div key={message.id || `msg-${index}`} className="space-y-4">
+                    <div key={message.id || `msg-${index}`} className="space-y-4 w-full">
                       <div
-                        className={`flex items-start ${
+                        className={`flex items-start w-full ${
                           message.type === "human" ? "justify-end" : "justify-start"
                         }`}
                       >
                         {message.type === "human" ? (
-                          <div className="max-w-[80%]">
+                          <div className="max-w-[80%] min-w-0">
                             <HumanMessageBubble
                               message={message}
                               mdComponents={mdComponents}
                             />
                           </div>
                         ) : (
-                          <div className="max-w-[95%] w-full">
+                          <div className="max-w-full w-full min-w-0">
                             <AiMessageBubble
                               message={message}
                               mdComponents={mdComponents}
@@ -581,15 +677,12 @@ export function ChatMessagesView({
                       </div>
                     </div>
                   );
-                })}
-
-                {isLoading &&
+                })}                {isLoading &&
                   (messages.length === 0 ||
                     messages[messages.length - 1].type === "human") && (
                     <div className="flex items-start mt-6">                      <div className="relative group max-w-[95%] w-full rounded-2xl p-6 shadow-xl break-words bg-gradient-to-br from-card to-muted text-foreground border border-border/50 backdrop-blur-sm min-h-[80px]">
                         <div className="flex items-center justify-start h-full">
-                          <Loader2 className="h-6 w-6 animate-spin text-blue-400 mr-3" />
-                          <span className="text-lg text-foreground">Processing your request...</span>
+                          <TypingAnimation />
                         </div>
                       </div>
                     </div>

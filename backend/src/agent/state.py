@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import TypedDict
+from typing import TypedDict, Dict, Any, List
 
 from langgraph.graph import add_messages
 from typing_extensions import Annotated
@@ -21,6 +21,11 @@ class OverallState(TypedDict):
     max_research_loops: int
     research_loop_count: int
     reasoning_model: str
+    # New fields for enhanced research flow
+    code_analysis_results: Annotated[list, operator.add]
+    generated_code: str  # Python code ready for execution
+    code_analysis_needed: bool  # Whether code analysis is required
+    final_report: str
 
 
 class ReflectionState(TypedDict):
@@ -43,6 +48,25 @@ class QueryGenerationState(TypedDict):
 class WebSearchState(TypedDict):
     search_query: str
     id: str
+
+
+class CodeGeneratorState(TypedDict):
+    research_content: str
+    research_topic: str
+    analysis_requirements: str
+    code_needed: bool
+
+
+class CodeExecutorState(TypedDict):
+    python_code: str
+    execution_context: str
+
+
+class ReportGeneratorState(TypedDict):
+    research_data: Dict[str, Any]
+    sources: List[Dict[str, Any]]
+    code_results: List[Dict[str, Any]]
+    report_format: str
 
 
 @dataclass(kw_only=True)
