@@ -2,14 +2,13 @@ import type React from "react";
 import type { Message } from "@langchain/langgraph-sdk";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Copy, CopyCheck } from "lucide-react";
-import { InputForm } from "@/components/InputForm";
+import { AdvancedInputForm } from "@/components/AdvancedInputForm";
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { cn } from "@/lib/utils";
 import { SourcesDisplay } from "@/components/SourcesDisplay";
-import { ThemeToggle } from "@/components/ThemeToggle";
 import { TypingAnimation } from "@/components/TypingAnimation";
 import {
   ActivityTimeline,
@@ -584,7 +583,7 @@ interface ChatMessagesViewProps {
   messages: Message[];
   isLoading: boolean;
   scrollAreaRef: React.RefObject<HTMLDivElement | null>;
-  onSubmit: (inputValue: string, effort: string, model: string) => void;
+  onSubmit: (inputValue: string, effort: string) => void;
   onCancel: () => void;
   liveActivityEvents: ProcessedEvent[];
   historicalActivities: Record<string, ProcessedEvent[]>;
@@ -626,25 +625,7 @@ export function ChatMessagesView({
   };
 
   const lastResearchSummary = getLastResearchSummary();
-
-  return (    <div className="flex flex-col h-full relative">      {/* Header/Title Area - Fixed */}      <div className="flex-shrink-0 p-4 border-b border-border/50 bg-background/95 backdrop-blur-sm">
-        <div className="w-full px-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-gradient-to-r from-blue-500/20 to-indigo-500/20 rounded-lg border border-blue-500/30">
-                <svg className="w-5 h-5 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
-                </svg>
-              </div>
-              <div>
-                <h1 className="text-xl font-bold text-foreground">Deep Research</h1>
-                <p className="text-sm text-muted-foreground">Powered by Azure AI</p>
-              </div>
-            </div>
-            <ThemeToggle />
-          </div>
-        </div>
-      </div>      {/* Two-Column Layout - Scrollable */}
+  return (    <div className="flex flex-col h-full relative">      {/* Two-Column Layout - Scrollable */}
       <div className="flex-1 relative overflow-hidden">
         <div className="flex h-full w-full px-4">          {/* Left Column - Chat Messages */}
           <div className="flex-1 min-w-0 pr-4">
@@ -775,9 +756,8 @@ export function ChatMessagesView({
           </div>
         </div>
       </div>      {/* Input Area - Fixed at bottom */}
-      <div className="flex-shrink-0 border-t border-border/50 bg-background/90 backdrop-blur-sm">
-        <InputForm
-          onSubmit={(inputValue: string) => onSubmit(inputValue, "", "")}
+      <div className="flex-shrink-0 border-t border-border/50 bg-background/90 backdrop-blur-sm">        <AdvancedInputForm
+          onSubmit={onSubmit}
           isLoading={isLoading}
           onCancel={onCancel}
           hasHistory={messages.length > 0}

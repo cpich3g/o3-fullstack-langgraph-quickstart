@@ -17,6 +17,7 @@ import {
   ChevronUp,
 } from "lucide-react";
 import { useEffect, useState } from "react";
+import { ResearchProgressRing } from "@/components/ResearchProgressRing";
 
 export interface ProcessedEvent {
   title: string;
@@ -257,13 +258,15 @@ export function ActivityTimeline({
             <button
               onClick={(e) => {
                 e.stopPropagation();
-                const newExpanded = new Set(expandedSteps);
-                if (isExpanded) {
-                  newExpanded.delete(index);
-                } else {
-                  newExpanded.add(index);
-                }
-                setExpandedSteps(newExpanded);
+                setExpandedSteps(prev => {
+                  const newExpanded = new Set(prev);
+                  if (isExpanded) {
+                    newExpanded.delete(index);
+                  } else {
+                    newExpanded.add(index);
+                  }
+                  return newExpanded;
+                });
               }}
               className="text-xs text-blue-400 hover:text-blue-300 underline cursor-pointer"
             >
@@ -334,47 +337,37 @@ export function ActivityTimeline({
               <ChevronUp className="h-4 w-4 mr-2" />
             )}
           </div>        </CardDescription>
-      </CardHeader>
-      
-      {/* Progress Bar Section */}
+      </CardHeader>        {/* Progress Ring Section */}
       <div className="px-6 pb-4">
-        <div className="space-y-2">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-medium text-foreground">
-              {getProgressLabel()}
-            </span>
-            <span className="text-xs text-muted-foreground">
+        <div className="flex items-center gap-4">
+          <ResearchProgressRing 
+            progress={calculateProgress()} 
+            size="md"
+            className="flex-shrink-0"
+          >
+            <div className="text-xs font-bold text-foreground">
               {Math.round(calculateProgress())}%
-            </span>
-          </div>
-          <Progress 
-            value={calculateProgress()} 
-            className="h-2 bg-muted/30"
-          />
-          <div className="flex justify-between text-xs text-muted-foreground">
-            <span>Plan</span>
-            <span>Research</span>
-            <span>Analyze</span>
-            <span>Synthesize</span>
-          </div>
-        </div>
-      </div>
-      
-      {!isTimelineCollapsed && (
-        <CardContent>
-          <div className="pb-4">
-            <Progress
-              value={calculateProgress()}
-              className="h-2.5 rounded-full"
-              aria-label="Research progress"
-            />
-            <div className="flex justify-between text-xs text-muted-foreground mt-1">
-              <span>{getProgressLabel()}</span>
-              <span>
+            </div>
+          </ResearchProgressRing>
+          
+          <div className="flex-1 space-y-2">
+            <div className="flex items-center justify-between">
+              <span className="text-sm font-medium text-foreground">
+                {getProgressLabel()}
+              </span>
+              <span className="text-xs text-muted-foreground">
                 {processedEvents.length} {processedEvents.length === 1 ? 'step' : 'steps'}
               </span>
             </div>
+            <Progress 
+              value={calculateProgress()} 
+              className="h-1.5 bg-muted/30"
+            />
           </div>
+        </div>
+      </div>
+        {!isTimelineCollapsed && (
+        <CardContent>
           {isLoading && processedEvents.length === 0 && (
             <div className="relative pl-8 pb-4">
               <div className="absolute left-3 top-3.5 h-full w-0.5 bg-border" />
