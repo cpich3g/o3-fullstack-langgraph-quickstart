@@ -188,7 +188,7 @@ export default function App() {
         messages: newMessages,
         initial_search_query_count: initial_search_query_count,
         max_research_loops: max_research_loops,
-        reasoning_model: "gpt-4o", // Default model since it's pre-configured
+        reasoning_model: "o3", // Default model since it's pre-configured
       });
     },
     [thread]
