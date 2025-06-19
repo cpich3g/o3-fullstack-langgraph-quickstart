@@ -31,10 +31,10 @@ export default function App() {
   >([]);
   const [historicalActivities, setHistoricalActivities] = useState<
     Record<string, ProcessedEvent[]>
-  >({});
-  const [researchInsights, setResearchInsights] = useState<ResearchInsight[]>([]);
+  >({});  const [researchInsights, setResearchInsights] = useState<ResearchInsight[]>([]);
   const [currentResearchMode, setCurrentResearchMode] = useState<string>("medium");
   const [isQuickResearchCollapsed, setIsQuickResearchCollapsed] = useState<boolean>(false);
+  const insightTimestampsRef = useRef<Record<string, Date>>({});
   const scrollAreaRef = useRef<HTMLDivElement>(null);
   const hasFinalizeEventOccurredRef = useRef(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -169,8 +169,8 @@ export default function App() {
     }
   }, [thread.messages.length, isQuickResearchCollapsed]);const handleSubmit = useCallback(
     (submittedInputValue: string, effort: string) => {
-      if (!submittedInputValue.trim()) return;
-      setProcessedEventsTimeline([]);
+      if (!submittedInputValue.trim()) return;      setProcessedEventsTimeline([]);
+      insightTimestampsRef.current = {};
       setCurrentResearchMode(effort);
       hasFinalizeEventOccurredRef.current = false;
 
@@ -243,7 +243,17 @@ export default function App() {
       case "high": return { label: "Thorough", description: "10 queries, 20 loops", color: "text-purple-400" };
       default: return { label: "Thorough", description: "10 queries, 20 loops", color: "text-purple-400" };
     }
-  }, [currentResearchMode]);  // Enhanced research insights generation based on research progress
+  }, [currentResearchMode]);
+
+  // Helper function to get or create timestamp for an insight
+  const getInsightTimestamp = (insightId: string): Date => {
+    if (!insightTimestampsRef.current[insightId]) {
+      insightTimestampsRef.current[insightId] = new Date();
+    }
+    return insightTimestampsRef.current[insightId];
+  };
+
+  // Enhanced research insights generation based on research progress
   useEffect(() => {
     if (processedEventsTimeline.length > 0) {
       const newInsights: ResearchInsight[] = [];
@@ -257,7 +267,7 @@ export default function App() {
           description: `Intelligent query generation tailored for ${currentResearchMode} depth research with targeted search strategies.`,
           confidence: 0.95,
           status: "completed",
-          timestamp: new Date(Date.now() - (newInsights.length * 2000)),
+          timestamp: getInsightTimestamp("methodology-strategy"),
           metrics: {
             queryCount: processedEventsTimeline.filter(e => e.title.toLowerCase().includes("generating")).length
           }
@@ -279,7 +289,7 @@ export default function App() {
           description: `Successfully gathered ${sourceCount} sources across multiple domains. Quality verification and content analysis completed.`,
           confidence: Math.min(0.6 + (sourceCount * 0.05), 0.95),
           status: "completed",
-          timestamp: new Date(Date.now() - (newInsights.length * 3000)),
+          timestamp: getInsightTimestamp("source-discovery"),
           metrics: {
             sourceCount: sourceCount,
             loopCount: webResearchEvents.length
@@ -310,7 +320,7 @@ export default function App() {
           description: analysisDescription,
           confidence: confidence,
           status: (typeof event.data === 'string' && event.data.includes("Search successful")) ? "completed" : "in_progress",
-          timestamp: new Date(Date.now() - ((newInsights.length + index) * 1500)),
+          timestamp: getInsightTimestamp(`reflection-${index}`),
           metrics: {
             loopCount: index + 1
           }
@@ -325,7 +335,7 @@ export default function App() {
           description: `Research ${progressPercent.toFixed(0)}% complete. Current phase: ${getProgressLabel()}. Advanced algorithms ensuring comprehensive coverage.`,
           confidence: Math.min(0.5 + (progressPercent / 200), 0.85),
           status: "in_progress",
-          timestamp: new Date(Date.now() - (newInsights.length * 1000)),
+          timestamp: getInsightTimestamp("progress-tracking"),
           metrics: {
             queryCount: processedEventsTimeline.filter(e => e.title.toLowerCase().includes("generating")).length,
             sourceCount: processedEventsTimeline.filter(e => e.title.toLowerCase().includes("research")).length
@@ -341,7 +351,7 @@ export default function App() {
           description: `Comprehensive research completed successfully. All identified knowledge gaps addressed with high-quality source integration.`,
           confidence: 0.95,
           status: "completed",
-          timestamp: new Date(),
+          timestamp: getInsightTimestamp("mission-accomplished"),
           metrics: {
             sourceCount: processedEventsTimeline.filter(e => e.title.toLowerCase().includes("research")).length,
             queryCount: processedEventsTimeline.filter(e => e.title.toLowerCase().includes("generating")).length,

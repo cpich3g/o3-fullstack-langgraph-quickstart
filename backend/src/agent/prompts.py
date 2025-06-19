@@ -67,7 +67,7 @@ Input Summaries:
 {summaries}"""
 
 
-answer_instructions = """Produce the final, citation-rich answer for the user and determine if computational code analysis would enhance the response.
+answer_instructions = """Produce the final, citation-rich answer for the user and determine if data analysis & visualization would enhance the response.
 
 Requirements:
 • Draw exclusively from the supplied summaries (and any new data delivered by reflection).
