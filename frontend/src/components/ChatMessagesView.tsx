@@ -10,6 +10,7 @@ import remarkGfm from "remark-gfm";
 import { cn } from "@/lib/utils";
 import { SourcesDisplay } from "@/components/SourcesDisplay";
 import { TypingAnimation } from "@/components/TypingAnimation";
+import { VisualizationCarousel } from "@/components/VisualizationCarousel";
 import {
   ActivityTimeline,
   ProcessedEvent,
@@ -519,36 +520,9 @@ const AiMessageBubble: React.FC<AiMessageBubbleProps> = ({
             {displayContent}
           </ReactMarkdown>
         </div>
-      </div>
-
-      {/* Visualizations Section */}
+      </div>      {/* Visualizations Section */}
       {visualizations.length > 0 && (
-        <div className="mt-6 space-y-4">
-          <div className="flex items-center gap-2 mb-4">
-            <div className="p-1.5 bg-blue-500/20 rounded-lg border border-blue-500/30">
-              <svg className="w-4 h-4 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-              </svg>
-            </div>
-            <h4 className="font-semibold text-foreground text-sm">Data Visualizations</h4>
-          </div>
-          
-          {visualizations.map((viz, index) => (
-            <div key={index} className="bg-card/50 rounded-xl border border-border/50 p-4 backdrop-blur-sm">
-              {viz.description && (
-                <p className="text-sm text-muted-foreground mb-3">{viz.description}</p>
-              )}
-              <div className="flex justify-center">
-                <img 
-                  src={`data:image/${viz.format || 'png'};base64,${viz.base64_data}`}
-                  alt={viz.description || `Visualization ${index + 1}`}
-                  className="max-w-full h-auto rounded-lg shadow-md border border-border/30"
-                  style={{maxHeight: '400px'}}
-                />
-              </div>
-            </div>
-          ))}
-        </div>
+        <VisualizationCarousel visualizations={visualizations} />
       )}
         {/* Sources Display */}
       {structuredContent && structuredContent.sources && structuredContent.sources.length > 0 && (
