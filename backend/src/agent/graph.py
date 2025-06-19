@@ -514,14 +514,26 @@ def code_executor(state: OverallState, config: RunnableConfig) -> OverallState:
     if not python_code:
         print("📝 No code to execute")
         return {"code_analysis_results": ["No code to execute"]}
-    
-    # CRITICAL VALIDATION: Ensure only actual Python code gets sent to sandbox
+      # CRITICAL VALIDATION: Ensure only actual Python code gets sent to sandbox
     if not _is_actual_python_code(python_code):
         print("⚠️  Generated content is not valid Python code, skipping execution")
         return {"code_analysis_results": ["Generated content is not executable Python code"]}
     
     print(f"🔬 Sending Python code to sandbox for execution ({len(python_code)} characters)")
-    print(f"   Code preview: {python_code[:100]}{'...' if len(python_code) > 100 else ''}")
+    print(f"   Code preview: {python_code[:200]}{'...' if len(python_code) > 200 else ''}")
+    
+    # Check if code is safe before execution
+    if not _is_safe_code(python_code):
+        print("❌ Code safety check failed - code contains potentially unsafe operations")
+        error_result = {
+            "code_executed": python_code,
+            "results": "",
+            "visualizations": [],
+            "insights": "Code contains potentially unsafe operations",
+            "errors": "Code safety check failed",
+            "execution_method": "subprocess_blocked"
+        }
+        return {"code_analysis_results": [error_result]}
     try:
         # Try to use Azure Container Apps dynamic sessions first
         if configurable.use_azure_sessions and AZURE_SESSIONS_AVAILABLE:
@@ -598,18 +610,7 @@ def _execute_code_with_subprocess(python_code: str, configurable) -> OverallStat
     print(f"🔄 Executing code using subprocess fallback...")
     
     try:
-        # Check if code is safe
-        if not _is_safe_code(python_code):
-            error_result = {
-                "code_executed": python_code,
-                "results": "",
-                "visualizations": [],
-                "insights": "Code contains potentially unsafe operations",
-                "errors": "Code safety check failed",
-                "execution_method": "subprocess_blocked"
-            }
-            return {"code_analysis_results": [error_result]}
-          # Execute the code
+        # Execute the code
         execution_result = _execute_python_code(python_code)
         
         analysis_result = {
@@ -819,14 +820,37 @@ def report_generator(state: OverallState, config: RunnableConfig) -> OverallStat
 
 def _is_safe_code(code: str) -> bool:
     """Check if Python code is safe to execute (basic safety check)."""
-    dangerous_keywords = [
-        "import os", "import subprocess", "import sys", "__import__",
-        "exec", "eval", "open", "file", "input", "raw_input",
-        "exit", "quit", "delete", "remove", "rmdir"
+    # More restrictive list focusing on truly dangerous operations
+    dangerous_patterns = [
+        "__import__", "exec(", "eval(", 
+        "subprocess.call", "subprocess.run", "subprocess.Popen", "subprocess.check_output",
+        "os.system", "os.popen", "os.spawn", "os.execv", "os.execl",
+        "open(", "file(", "input(", "raw_input(",
+        "exit(", "quit(", "sys.exit",
+        "rmdir", "shutil.rmtree", "os.remove", "os.unlink", "os.rmdir",
+        "socket.socket", "urllib.request", "requests.get", "requests.post", "requests.put",
+        "pickle.load", "marshal.load", "compile(",
+        "globals(", "locals(", "vars(", "dir(",
+        "getattr(", "setattr(", "delattr(", "hasattr(",
+        "__builtins__", "__globals__", "__locals__"
     ]
     
     code_lower = code.lower()
-    return not any(keyword in code_lower for keyword in dangerous_keywords)
+    
+    # Check for dangerous patterns
+    for pattern in dangerous_patterns:
+        if pattern in code_lower:
+            print(f"⚠️  Code safety check failed: detected dangerous pattern '{pattern}'")
+            return False
+    
+    # Additional check for file system operations
+    if any(keyword in code_lower for keyword in ["write(", "writelines(", "w'", 'w"']):
+        # Allow only in-memory operations or safe matplotlib/plot saving
+        if not any(safe_write in code_lower for safe_write in ["stringio", "bytesio", "savefig", "to_csv", "to_json"]):
+            print("⚠️  Code safety check failed: detected file write operations")
+            return False
+    
+    return True
 
 
 def _execute_python_code(code: str) -> Dict[str, Any]:
