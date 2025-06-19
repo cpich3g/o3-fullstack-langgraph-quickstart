@@ -247,7 +247,6 @@ export default function App() {
   useEffect(() => {
     if (processedEventsTimeline.length > 0) {
       const newInsights: ResearchInsight[] = [];
-      const currentTime = new Date();
       
       // Add methodology insight for initial query generation
       const hasGeneration = processedEventsTimeline.some(e => e.title.toLowerCase().includes("generating"));
@@ -258,7 +257,7 @@ export default function App() {
           description: `Intelligent query generation tailored for ${currentResearchMode} depth research with targeted search strategies.`,
           confidence: 0.95,
           status: "completed",
-          timestamp: currentTime,
+          timestamp: new Date(Date.now() - (newInsights.length * 2000)),
           metrics: {
             queryCount: processedEventsTimeline.filter(e => e.title.toLowerCase().includes("generating")).length
           }
@@ -274,15 +273,13 @@ export default function App() {
             return acc + (match ? parseInt(match[1]) : 1);
           }
           return acc + 1;
-        }, 0);
-
-        newInsights.push({
+        }, 0);        newInsights.push({
           type: "source",
           title: "Source Discovery & Analysis",
           description: `Successfully gathered ${sourceCount} sources across multiple domains. Quality verification and content analysis completed.`,
-          confidence: 0.85,
+          confidence: Math.min(0.6 + (sourceCount * 0.05), 0.95),
           status: "completed",
-          timestamp: currentTime,
+          timestamp: new Date(Date.now() - (newInsights.length * 3000)),
           metrics: {
             sourceCount: sourceCount,
             loopCount: webResearchEvents.length
@@ -307,14 +304,13 @@ export default function App() {
             analysisDescription = "Analysis identified specific knowledge gaps. Additional targeted research queries generated for comprehensive coverage.";
             confidence = 0.8;
           }
-        }
-          newInsights.push({
+        }        newInsights.push({
           type: "analysis",
           title: analysisTitle,
           description: analysisDescription,
           confidence: confidence,
           status: (typeof event.data === 'string' && event.data.includes("Search successful")) ? "completed" : "in_progress",
-          timestamp: currentTime,
+          timestamp: new Date(Date.now() - ((newInsights.length + index) * 1500)),
           metrics: {
             loopCount: index + 1
           }
@@ -323,14 +319,13 @@ export default function App() {
 
       // Add progress insight for ongoing research
       if (thread.isLoading && processedEventsTimeline.length > 0) {
-        const progressPercent = calculateProgress();
-        newInsights.push({
+        const progressPercent = calculateProgress();        newInsights.push({
           type: "progress",
           title: "Research Progress Tracking",
           description: `Research ${progressPercent.toFixed(0)}% complete. Current phase: ${getProgressLabel()}. Advanced algorithms ensuring comprehensive coverage.`,
-          confidence: 0.75,
+          confidence: Math.min(0.5 + (progressPercent / 200), 0.85),
           status: "in_progress",
-          timestamp: currentTime,
+          timestamp: new Date(Date.now() - (newInsights.length * 1000)),
           metrics: {
             queryCount: processedEventsTimeline.filter(e => e.title.toLowerCase().includes("generating")).length,
             sourceCount: processedEventsTimeline.filter(e => e.title.toLowerCase().includes("research")).length
@@ -340,14 +335,13 @@ export default function App() {
 
       // Add final completion insight
       const hasFinalized = processedEventsTimeline.some(e => e.title.toLowerCase().includes("finalizing"));
-      if (hasFinalized && !thread.isLoading) {
-        newInsights.push({
+      if (hasFinalized && !thread.isLoading) {        newInsights.push({
           type: "analysis",
           title: "Research Mission Accomplished",
           description: `Comprehensive research completed successfully. All identified knowledge gaps addressed with high-quality source integration.`,
           confidence: 0.95,
           status: "completed",
-          timestamp: currentTime,
+          timestamp: new Date(),
           metrics: {
             sourceCount: processedEventsTimeline.filter(e => e.title.toLowerCase().includes("research")).length,
             queryCount: processedEventsTimeline.filter(e => e.title.toLowerCase().includes("generating")).length,
@@ -428,10 +422,9 @@ export default function App() {
                           insight.type === 'methodology' ? 'bg-purple-500/10 border-purple-500/20' :
                           insight.type === 'progress' ? 'bg-orange-500/10 border-orange-500/20' :
                           'bg-muted/20 border-border/30'
-                        }`}>
-                          {/* Header with title and status */}
-                          <div className="flex items-center justify-between mb-2">
-                            <div className={`font-medium text-sm flex-1 pr-2 ${
+                        }`}>                          {/* Header with title and status */}
+                          <div className="flex items-center justify-between mb-2 gap-2">
+                            <div className={`font-medium text-sm flex-1 pr-2 break-words ${
                               insight.type === 'analysis' ? 'text-blue-400' :
                               insight.type === 'source' ? 'text-green-400' :
                               insight.type === 'methodology' ? 'text-purple-400' :
@@ -441,7 +434,7 @@ export default function App() {
                               {insight.title}
                             </div>
                             {insight.status && (
-                              <div className={`text-xs px-2 py-1 rounded-full flex-shrink-0 font-medium ${
+                              <div className={`text-xs px-2 py-1 rounded-full flex-shrink-0 font-medium whitespace-nowrap ${
                                 insight.status === 'completed' ? 'bg-green-500/20 text-green-400 border border-green-500/30' :
                                 insight.status === 'in_progress' ? 'bg-blue-500/20 text-blue-400 border border-blue-500/30' :
                                 'bg-gray-500/20 text-gray-400 border border-gray-500/30'
@@ -452,47 +445,34 @@ export default function App() {
                           </div>
                           
                           {/* Description */}
-                          <div className="text-muted-foreground mb-3 text-xs leading-relaxed">
+                          <div className="text-muted-foreground mb-3 text-xs leading-relaxed break-words">
                             {insight.description}
                           </div>
                           
-                          {/* Footer with metrics and timestamp */}
-                          <div className="flex items-center justify-between text-xs">
-                            <div className="flex items-center gap-3">
-                              {insight.confidence && (
-                                <div className="flex items-center gap-1">
+                          {/* Footer with simplified metrics */}
+                          <div className="flex items-center justify-between text-xs gap-2">
+                            <div className="flex items-center gap-3 flex-wrap min-w-0">
+                              {/* Only show confidence if it's dynamically calculated (varies from static values) */}
+                              {insight.confidence && insight.confidence !== 0.95 && insight.confidence !== 0.85 && insight.confidence !== 0.75 && (
+                                <div className="flex items-center gap-1 flex-shrink-0">
                                   <span className="text-muted-foreground/80">Confidence:</span>
                                   <span className="text-foreground font-medium">
                                     {Math.round(insight.confidence * 100)}%
                                   </span>
                                 </div>
                               )}
-                              {insight.metrics && (
-                                <div className="flex items-center gap-3 text-muted-foreground">
-                                  {insight.metrics.sourceCount && (
-                                    <div className="flex items-center gap-1">
-                                      <span className="text-muted-foreground/80">Sources:</span>
-                                      <span className="text-foreground font-medium">{insight.metrics.sourceCount}</span>
-                                    </div>
-                                  )}
-                                  {insight.metrics.queryCount && (
-                                    <div className="flex items-center gap-1">
-                                      <span className="text-muted-foreground/80">Queries:</span>
-                                      <span className="text-foreground font-medium">{insight.metrics.queryCount}</span>
-                                    </div>
-                                  )}
-                                  {insight.metrics.loopCount && (
-                                    <div className="flex items-center gap-1">
-                                      <span className="text-muted-foreground/80">Loop:</span>
-                                      <span className="text-foreground font-medium">{insight.metrics.loopCount}</span>
-                                    </div>
-                                  )}
+                              {/* Always show sources when available */}
+                              {insight.metrics?.sourceCount && (
+                                <div className="flex items-center gap-1 flex-shrink-0">
+                                  <span className="text-muted-foreground/80">Sources:</span>
+                                  <span className="text-foreground font-medium">{insight.metrics.sourceCount}</span>
                                 </div>
                               )}
                             </div>
+                            {/* Always show timestamp */}
                             {insight.timestamp && (
-                              <div className="text-muted-foreground/80 flex-shrink-0 ml-2">
-                                {insight.timestamp.toLocaleTimeString()}
+                              <div className="text-muted-foreground/80 flex-shrink-0 text-right">
+                                {insight.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                               </div>
                             )}
                           </div>
