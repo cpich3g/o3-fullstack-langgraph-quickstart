@@ -167,12 +167,12 @@ export default function App() {
           max_research_loops = 1;
           break;
         case "medium":
-          initial_search_query_count = 3;
-          max_research_loops = 3;
+          initial_search_query_count = 5;
+          max_research_loops = 5;
           break;
         case "high":
           initial_search_query_count = 10;
-          max_research_loops = 30;
+          max_research_loops = 20;
           break;
       }
 
@@ -224,9 +224,9 @@ export default function App() {
   const getResearchModeLabel = useCallback(() => {
     switch (currentResearchMode) {
       case "low": return { label: "Quick", description: "1 query, 1 loop", color: "text-green-400" };
-      case "medium": return { label: "Balanced", description: "3 queries, 3 loops", color: "text-blue-400" };
-      case "high": return { label: "Thorough", description: "10 queries, 30 loops", color: "text-purple-400" };
-      default: return { label: "Balanced", description: "3 queries, 3 loops", color: "text-blue-400" };
+      case "medium": return { label: "Balanced", description: "5 queries, 5 loops", color: "text-blue-400" };
+      case "high": return { label: "Thorough", description: "10 queries, 20 loops", color: "text-purple-400" };
+      default: return { label: "Thorough", description: "10 queries, 20 loops", color: "text-purple-400" };
     }
   }, [currentResearchMode]);
 

@@ -52,15 +52,12 @@ Research Topic: {research_topic}"""
 
 reflection_instructions = """You audit the search summaries for “{research_topic}”.
 
-Steps
+Steps:
+1. Identify any hard knowledge gaps—missing metrics, unclear mechanisms, outdated figures, unexplored edge-cases, etc.
+2. Decide whether the summaries already suffice to answer the user question.
+3. If not sufficient, craft follow-up search queries (one or several) that are fully self-contained and laser-focused on the gap.
 
-Identify any hard knowledge gaps—missing metrics, unclear mechanisms, outdated figures, unexplored edge-cases, etc.
-
-Decide whether the summaries already suffice to answer the user question.
-
-If not sufficient, craft follow-up search queries (one or several) that are fully self-contained and laser-focused on the gap.
-
-OUTPUT (strict JSON)
+OUTPUT (strict JSON):
 {{
   "is_sufficient": <true|false>,
   "knowledge_gap": "<short description or empty string>",
