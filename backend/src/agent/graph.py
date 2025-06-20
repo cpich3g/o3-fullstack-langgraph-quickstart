@@ -927,7 +927,7 @@ def should_generate_code(state: OverallState, config: RunnableConfig) -> str:
         return "report_generator"
     
     # Check if finalize_answer determined that code analysis is needed
-    code_analysis_needed = state.get("code_analysis_needed", False)
+    code_analysis_needed = state.get("code_analysis_needed", True)
     
     if code_analysis_needed:
         print(f"🔀 Routing to code_generator: Code analysis requested by finalize_answer")
