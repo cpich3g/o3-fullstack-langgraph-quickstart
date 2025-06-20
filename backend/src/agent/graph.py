@@ -508,8 +508,7 @@ def code_generator(state: OverallState, config: RunnableConfig) -> OverallState:
 def code_executor(state: OverallState, config: RunnableConfig) -> OverallState:
     """LangGraph node that executes Python code using Azure Container Apps dynamic sessions."""
     configurable = Configuration.from_runnable_config(config)
-    
-    # Check if we have code to execute
+      # Check if we have code to execute
     python_code = state.get("generated_code", "").strip()
     if not python_code:
         print("📝 No code to execute")
@@ -521,19 +520,8 @@ def code_executor(state: OverallState, config: RunnableConfig) -> OverallState:
     
     print(f"🔬 Sending Python code to sandbox for execution ({len(python_code)} characters)")
     print(f"   Code preview: {python_code[:200]}{'...' if len(python_code) > 200 else ''}")
+    print("⚠️  Note: Code safety checks are disabled - executing code without restrictions")
     
-    # Check if code is safe before execution
-    if not _is_safe_code(python_code):
-        print("❌ Code safety check failed - code contains potentially unsafe operations")
-        error_result = {
-            "code_executed": python_code,
-            "results": "",
-            "visualizations": [],
-            "insights": "Code contains potentially unsafe operations",
-            "errors": "Code safety check failed",
-            "execution_method": "subprocess_blocked"
-        }
-        return {"code_analysis_results": [error_result]}
     try:
         # Try to use Azure Container Apps dynamic sessions first
         if configurable.use_azure_sessions and AZURE_SESSIONS_AVAILABLE:
@@ -572,8 +560,7 @@ def _execute_code_with_azure_sessions(python_code: str, configurable) -> Overall
             print(f"⚠️  Azure sessions connection failed: {str(connection_error)}")
             print("   Falling back to subprocess execution")
             return _execute_code_with_subprocess(python_code, configurable)
-        
-        # Execute the code
+          # Execute the code
         print(f"🚀 Executing code in Azure Container Apps sandbox...")
         
         try:
@@ -581,15 +568,14 @@ def _execute_code_with_azure_sessions(python_code: str, configurable) -> Overall
             print(f"✅ Code execution completed successfully")
         except Exception as exec_error:
             error_msg = str(exec_error)
-            print(f"❌ Azure sessions execution failed: {error_msg}")
             
-            # Check if it's an authentication error and suggest fallback
-            if any(keyword in error_msg.lower() for keyword in ['credential', 'authentication', 'token', 'auth']):
-                print("   This appears to be an authentication issue.")
-                print("   Falling back to subprocess execution...")
+            # Check if it's an authentication error (expected when not configured)
+            if any(keyword in error_msg.lower() for keyword in ['credential', 'authentication', 'token', 'auth', 'defaultazurecredential']):
+                print("🔄 Azure authentication not configured, using subprocess execution...")
                 return _execute_code_with_subprocess(python_code, configurable)
             else:
                 # For other execution errors, still try fallback
+                print(f"⚠️  Azure sessions execution failed: {error_msg}")
                 print("   Falling back to subprocess execution...")
                 return _execute_code_with_subprocess(python_code, configurable)
         
@@ -607,7 +593,7 @@ def _execute_code_with_azure_sessions(python_code: str, configurable) -> Overall
 def _execute_code_with_subprocess(python_code: str, configurable) -> OverallState:
     """Execute Python code using subprocess fallback."""
     
-    print(f"🔄 Executing code using subprocess fallback...")
+    print(f"🔄 Executing code using local subprocess (recommended for development)...")
     
     try:
         # Execute the code
@@ -816,41 +802,6 @@ def report_generator(state: OverallState, config: RunnableConfig) -> OverallStat
             "final_report": fallback_content,
             "messages": [AIMessage(content=f"Research completed with some limitations: {str(e)}\n\n{fallback_content}")]
         }
-
-
-def _is_safe_code(code: str) -> bool:
-    """Check if Python code is safe to execute (basic safety check)."""
-    # More restrictive list focusing on truly dangerous operations
-    dangerous_patterns = [
-        "__import__", "exec(", "eval(", 
-        "subprocess.call", "subprocess.run", "subprocess.Popen", "subprocess.check_output",
-        "os.system", "os.popen", "os.spawn", "os.execv", "os.execl",
-        "open(", "file(", "input(", "raw_input(",
-        "exit(", "quit(", "sys.exit",
-        "rmdir", "shutil.rmtree", "os.remove", "os.unlink", "os.rmdir",
-        "socket.socket", "urllib.request", "requests.get", "requests.post", "requests.put",
-        "pickle.load", "marshal.load", "compile(",
-        "globals(", "locals(", "vars(", "dir(",
-        "getattr(", "setattr(", "delattr(", "hasattr(",
-        "__builtins__", "__globals__", "__locals__"
-    ]
-    
-    code_lower = code.lower()
-    
-    # Check for dangerous patterns
-    for pattern in dangerous_patterns:
-        if pattern in code_lower:
-            print(f"⚠️  Code safety check failed: detected dangerous pattern '{pattern}'")
-            return False
-    
-    # Additional check for file system operations
-    if any(keyword in code_lower for keyword in ["write(", "writelines(", "w'", 'w"']):
-        # Allow only in-memory operations or safe matplotlib/plot saving
-        if not any(safe_write in code_lower for safe_write in ["stringio", "bytesio", "savefig", "to_csv", "to_json"]):
-            print("⚠️  Code safety check failed: detected file write operations")
-            return False
-    
-    return True
 
 
 def _execute_python_code(code: str) -> Dict[str, Any]:

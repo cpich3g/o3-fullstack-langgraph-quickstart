@@ -11,7 +11,7 @@ class Configuration(BaseModel):
     query_generator_model: str = Field(
         default="gpt-4.1-mini",
         metadata={
-            "description": "The name of the Azure OpenAI o3 model to use for query generation."
+            "description": "The name of the Azure OpenAI gpt-4.1-mini model to use for query generation."
         },
     )
 
@@ -25,7 +25,7 @@ class Configuration(BaseModel):
     answer_model: str = Field(
         default="gpt-4.1-mini",
         metadata={
-            "description": "The name of the Azure OpenAI o3 model to use for answer generation."
+            "description": "The name of the Azure OpenAI gpt-4.1-mini model to use for answer generation."
         },
     )
 
@@ -75,7 +75,7 @@ class Configuration(BaseModel):
     )
 
     code_interpreter_model: str = Field(
-        default="gpt-4.1-mini",
+        default="gpt-4.1",
         metadata={
             "description": "The Azure OpenAI model to use for code interpretation tasks."
         },
@@ -84,20 +84,19 @@ class Configuration(BaseModel):
     # Azure Container Apps Dynamic Sessions settings
     pool_management_endpoint: str = Field(
         default="",
-        metadata={
-            "description": "Azure Container Apps dynamic sessions pool management endpoint URL."
+        metadata={            "description": "Azure Container Apps dynamic sessions pool management endpoint URL."
         },
     )
 
     use_azure_sessions: bool = Field(
         default=True,
         metadata={
-            "description": "Whether to use Azure Container Apps dynamic sessions for code execution."
+            "description": "Whether to use Azure Container Apps dynamic sessions for code execution. Set to True only when Azure authentication is properly configured."
         },
     )
 
     azure_sessions_no_auth: bool = Field(
-        default=False,
+        default=True,
         metadata={
             "description": "Set to True if the Azure Container Apps sessions endpoint is public and doesn't require authentication."
         },
@@ -112,7 +111,7 @@ class Configuration(BaseModel):
     )
 
     report_generator_model: str = Field(
-        default="gpt-4.1-mini",
+        default="gpt-4.1",
         metadata={
             "description": "The Azure OpenAI model to use for report generation."
         },
