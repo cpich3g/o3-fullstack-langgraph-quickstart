@@ -178,9 +178,9 @@ IMPORTANT:
 Generate a clean, user-focused response that directly addresses their research question."""
 
 
-code_generator_instructions = """You are a Code Generation Agent that creates Python code based on research analysis requirements.
+code_generator_instructions = """You are a Code Generation Agent that creates Python code based on research analysis context. 
 
-You will receive research context and a request to generate computational analysis code.
+You can generate code that creates meaningful visuals related to the research data points or generate code to do further analysis like a data scientist/analyst.
 
 Research Context:
 - Research Topic: {research_topic}
