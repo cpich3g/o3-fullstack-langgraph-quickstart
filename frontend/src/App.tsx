@@ -295,36 +295,45 @@ export default function App() {
             loopCount: webResearchEvents.length
           }
         });
-      }
-
-      // Add reflection analysis insights
+      }      // Add reflection analysis insights with deduplication
       const reflectionEvents = processedEventsTimeline.filter(e => e.title.toLowerCase().includes("reflection"));
-      reflectionEvents.forEach((event, index) => {
+      const reflectionInsightTypes = new Set<string>();
+      
+      reflectionEvents.forEach((event) => {
         let analysisTitle = "Research Depth Analysis";
         let analysisDescription = "Comprehensive evaluation of information coverage and research completeness.";
         let confidence = 0.7;
+        let insightKey = "depth-analysis";
         
         if (typeof event.data === 'string') {
           if (event.data.includes("Search successful")) {
             analysisTitle = "Research Completion Validated";
             analysisDescription = "Analysis confirms sufficient information depth achieved. Research objectives met with high confidence.";
             confidence = 0.9;
+            insightKey = "completion-validated";
           } else if (event.data.includes("Need more information")) {
             analysisTitle = "Knowledge Gap Identification";
             analysisDescription = "Analysis identified specific knowledge gaps. Additional targeted research queries generated for comprehensive coverage.";
             confidence = 0.8;
+            insightKey = "knowledge-gaps";
           }
-        }        newInsights.push({
-          type: "analysis",
-          title: analysisTitle,
-          description: analysisDescription,
-          confidence: confidence,
-          status: (typeof event.data === 'string' && event.data.includes("Search successful")) ? "completed" : "in_progress",
-          timestamp: getInsightTimestamp(`reflection-${index}`),
-          metrics: {
-            loopCount: index + 1
-          }
-        });
+        }
+
+        // Only add this insight type if we haven't already added it
+        if (!reflectionInsightTypes.has(insightKey)) {
+          reflectionInsightTypes.add(insightKey);
+          newInsights.push({
+            type: "analysis",
+            title: analysisTitle,
+            description: analysisDescription,
+            confidence: confidence,
+            status: (typeof event.data === 'string' && event.data.includes("Search successful")) ? "completed" : "in_progress",
+            timestamp: getInsightTimestamp(`reflection-${insightKey}`),
+            metrics: {
+              loopCount: reflectionEvents.length // Show total reflection loops instead of individual index
+            }
+          });
+        }
       });
 
       // Add progress insight for ongoing research
@@ -357,10 +366,14 @@ export default function App() {
             queryCount: processedEventsTimeline.filter(e => e.title.toLowerCase().includes("generating")).length,
             loopCount: processedEventsTimeline.filter(e => e.title.toLowerCase().includes("reflection")).length
           }
-        });
-      }
+        });      }
       
-      setResearchInsights(newInsights);
+      // Comprehensive deduplication: Remove insights with duplicate titles
+      const uniqueInsights = newInsights.filter((insight, index, array) => 
+        array.findIndex(item => item.title === insight.title) === index
+      );
+      
+      setResearchInsights(uniqueInsights);
     }
   }, [processedEventsTimeline, thread.isLoading, currentResearchMode, calculateProgress, getProgressLabel]);return (
     <ThemeProvider>
