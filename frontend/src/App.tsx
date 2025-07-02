@@ -7,7 +7,7 @@ import { ChatMessagesView } from "@/components/ChatMessagesView";
 import { ThemeProvider } from "@/components/ThemeProvider";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { ResearchProgressRing } from "@/components/ResearchProgressRing";
-import { ChevronDown, ChevronUp } from "lucide-react";
+import { ChevronDown, ChevronUp, Menu, X } from "lucide-react";
 
 interface ResearchInsight {
   type: "trend" | "source" | "analysis" | "suggestion" | "methodology" | "progress";
@@ -34,6 +34,7 @@ export default function App() {
   >({});  const [researchInsights, setResearchInsights] = useState<ResearchInsight[]>([]);
   const [currentResearchMode, setCurrentResearchMode] = useState<string>("medium");
   const [isQuickResearchCollapsed, setIsQuickResearchCollapsed] = useState<boolean>(false);
+  const [isSidebarOpen, setIsSidebarOpen] = useState<boolean>(false); // Mobile sidebar state
   const insightTimestampsRef = useRef<Record<string, Date>>({});
   const scrollAreaRef = useRef<HTMLDivElement>(null);
   const hasFinalizeEventOccurredRef = useRef(false);
@@ -167,7 +168,19 @@ export default function App() {
     if (thread.messages.length > 0 && !isQuickResearchCollapsed) {
       setIsQuickResearchCollapsed(true);
     }
-  }, [thread.messages.length, isQuickResearchCollapsed]);const handleSubmit = useCallback(
+  }, [thread.messages.length, isQuickResearchCollapsed]);
+
+  // Close mobile sidebar when resizing to tablet/desktop
+  useEffect(() => {
+    const handleResize = () => {
+      if (window.innerWidth >= 768 && isSidebarOpen) {
+        setIsSidebarOpen(false);
+      }
+    };
+
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, [isSidebarOpen]);const handleSubmit = useCallback(
     (submittedInputValue: string, effort: string) => {
       if (!submittedInputValue.trim()) return;      setProcessedEventsTimeline([]);
       insightTimestampsRef.current = {};
@@ -211,6 +224,17 @@ export default function App() {
     thread.stop();
     window.location.reload();
   }, [thread]);
+
+  // Helper function for quick research buttons that closes mobile sidebar
+  const handleQuickResearch = useCallback((text: string) => {
+    const textarea = textareaRef.current;
+    if (textarea) {
+      textarea.value = text;
+      textarea.focus();
+      // Close mobile sidebar after selection
+      setIsSidebarOpen(false);
+    }
+  }, []);
 
   // Calculate research progress based on events
   const calculateProgress = useCallback(() => {
@@ -375,13 +399,39 @@ export default function App() {
       
       setResearchInsights(uniqueInsights);
     }
-  }, [processedEventsTimeline, thread.isLoading, currentResearchMode, calculateProgress, getProgressLabel]);return (
+  }, [processedEventsTimeline, thread.isLoading, currentResearchMode, calculateProgress, getProgressLabel]);  return (
     <ThemeProvider>
       <div className="fixed inset-0 bg-gradient-to-br from-background via-muted/30 to-background text-foreground font-sans antialiased">
-        {/* Full-width desktop layout */}
-        <div className="flex h-full">
-          {/* Left sidebar for research progress and quick actions */}
-          <div className="w-80 flex-shrink-0 flex flex-col bg-card/30 border-r border-border/30">            {/* Header */}
+        {/* Responsive layout */}
+        <div className="flex h-full relative">
+          {/* Mobile overlay for sidebar */}
+          {isSidebarOpen && (
+            <div 
+              className="fixed inset-0 bg-black/50 z-40 md:hidden"
+              onClick={() => setIsSidebarOpen(false)}
+            />
+          )}
+          
+          {/* Sidebar - responsive */}
+          <div className={`
+            ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'}
+            md:translate-x-0
+            fixed md:relative z-50 md:z-auto
+            w-80 md:w-80 
+            h-full
+            flex-shrink-0 flex flex-col 
+            bg-card/30 border-r border-border/30
+            transition-transform duration-300 ease-in-out
+          `}>
+            {/* Mobile close button */}
+            <div className="md:hidden absolute top-4 right-4 z-10">
+              <button
+                onClick={() => setIsSidebarOpen(false)}
+                className="p-2 rounded-lg bg-card/50 hover:bg-card/70 transition-colors"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>            {/* Header */}
             <div className="p-4 border-b border-border/30">
               <div className="flex items-center gap-3 mb-3">
                 <div className="relative">
@@ -526,26 +576,14 @@ export default function App() {
               }`}>
                 <div className="space-y-2">
                   <button
-                    onClick={() => {
-                      const textarea = textareaRef.current;
-                      if (textarea) {
-                        textarea.value = "What are the latest trends in artificial intelligence and machine learning for 2025?";
-                        textarea.focus();
-                      }
-                    }}
+                    onClick={() => handleQuickResearch("What are the latest trends in artificial intelligence and machine learning for 2025?")}
                     className="w-full text-left p-3 rounded-lg bg-muted/20 hover:bg-muted/40 transition-colors border border-border/30"
                   >
                     <div className="text-sm font-medium text-foreground">🤖 AI Trends 2025</div>
                     <div className="text-xs text-muted-foreground">Latest AI and ML developments</div>
                   </button>                  
                   <button
-                    onClick={() => {
-                      const textarea = textareaRef.current;
-                      if (textarea) {
-                        textarea.value = "Analyze the current state of the global cryptocurrency market and blockchain adoption trends.";
-                        textarea.focus();
-                      }
-                    }}
+                    onClick={() => handleQuickResearch("Analyze the current state of the global cryptocurrency market and blockchain adoption trends.")}
                     className="w-full text-left p-3 rounded-lg bg-muted/20 hover:bg-muted/40 transition-colors border border-border/30"
                   >
                     <div className="text-sm font-medium text-foreground">📈 Crypto Market</div>
@@ -553,26 +591,14 @@ export default function App() {
                   </button>
                   
                   <button
-                    onClick={() => {
-                      const textarea = textareaRef.current;
-                      if (textarea) {
-                        textarea.value = "Research the latest developments in renewable energy technology and sustainability initiatives.";
-                        textarea.focus();
-                      }
-                    }}
+                    onClick={() => handleQuickResearch("Research the latest developments in renewable energy technology and sustainability initiatives.")}
                     className="w-full text-left p-3 rounded-lg bg-muted/20 hover:bg-muted/40 transition-colors border border-border/30"
                   >
                     <div className="text-sm font-medium text-foreground">🌱 Clean Energy</div>
                     <div className="text-xs text-muted-foreground">Sustainability and green tech</div>
                   </button>
                     <button
-                    onClick={() => {
-                      const textarea = textareaRef.current;
-                      if (textarea) {
-                        textarea.value = "Explore the impact of remote work on productivity and company culture in 2025.";
-                        textarea.focus();
-                      }
-                    }}
+                    onClick={() => handleQuickResearch("Explore the impact of remote work on productivity and company culture in 2025.")}
                     className="w-full text-left p-3 rounded-lg bg-muted/20 hover:bg-muted/40 transition-colors border border-border/30"
                   >
                     <div className="text-sm font-medium text-foreground">💼 Future of Work</div>
@@ -580,13 +606,7 @@ export default function App() {
                   </button>
 
                   <button
-                    onClick={() => {
-                      const textarea = textareaRef.current;
-                      if (textarea) {
-                        textarea.value = "Analyze current retail consumer behavior trends, e-commerce growth patterns, and omnichannel marketing strategies for 2025.";
-                        textarea.focus();
-                      }
-                    }}
+                    onClick={() => handleQuickResearch("Analyze current retail consumer behavior trends, e-commerce growth patterns, and omnichannel marketing strategies for 2025.")}
                     className="w-full text-left p-3 rounded-lg bg-muted/20 hover:bg-muted/40 transition-colors border border-border/30"
                   >
                     <div className="text-sm font-medium text-foreground">🛍️ Retail Intelligence</div>
@@ -594,13 +614,7 @@ export default function App() {
                   </button>
 
                   <button
-                    onClick={() => {
-                      const textarea = textareaRef.current;
-                      if (textarea) {
-                        textarea.value = "Research advanced manufacturing technologies, Industry 4.0 implementations, and supply chain optimization strategies for 2025.";
-                        textarea.focus();
-                      }
-                    }}
+                    onClick={() => handleQuickResearch("Research advanced manufacturing technologies, Industry 4.0 implementations, and supply chain optimization strategies for 2025.")}
                     className="w-full text-left p-3 rounded-lg bg-muted/20 hover:bg-muted/40 transition-colors border border-border/30"
                   >
                     <div className="text-sm font-medium text-foreground">🏭 Manufacturing</div>
@@ -608,13 +622,7 @@ export default function App() {
                   </button>
 
                   <button
-                    onClick={() => {
-                      const textarea = textareaRef.current;
-                      if (textarea) {
-                        textarea.value = "Examine hospitality industry recovery trends, guest experience innovations, and technology adoption in hotels and restaurants for 2025.";
-                        textarea.focus();
-                      }
-                    }}
+                    onClick={() => handleQuickResearch("Examine hospitality industry recovery trends, guest experience innovations, and technology adoption in hotels and restaurants for 2025.")}
                     className="w-full text-left p-3 rounded-lg bg-muted/20 hover:bg-muted/40 transition-colors border border-border/30"
                   >
                     <div className="text-sm font-medium text-foreground">🏨 Hospitality</div>
@@ -630,27 +638,40 @@ export default function App() {
           </div>
 
           {/* Main content area */}
-          <main className="flex-1 flex flex-col min-w-0">
-            {thread.messages.length === 0 ? (
-              <div className="flex flex-col h-full">
-                <WelcomeScreen
-                  handleSubmit={handleSubmit}
+          <main className="flex-1 flex flex-col min-w-0 relative">
+            {/* Mobile menu button */}
+            <div className="md:hidden absolute top-4 left-4 z-10">
+              <button
+                onClick={() => setIsSidebarOpen(true)}
+                className="p-2 rounded-lg bg-card/50 hover:bg-card/70 transition-colors backdrop-blur-sm border border-border/30"
+              >
+                <Menu className="h-5 w-5" />
+              </button>
+            </div>
+            
+            {/* Content */}
+            <div className="flex-1 flex flex-col pt-16 md:pt-0">
+              {thread.messages.length === 0 ? (
+                <div className="flex flex-col h-full">
+                  <WelcomeScreen
+                    handleSubmit={handleSubmit}
+                    isLoading={thread.isLoading}
+                    onCancel={handleCancel}
+                    textareaRef={textareaRef}
+                  />
+                </div>
+              ) : (
+                <ChatMessagesView
+                  messages={thread.messages}
                   isLoading={thread.isLoading}
+                  scrollAreaRef={scrollAreaRef}
+                  onSubmit={handleSubmit}
                   onCancel={handleCancel}
+                  liveActivityEvents={processedEventsTimeline}
+                  historicalActivities={historicalActivities}
                   textareaRef={textareaRef}
-                />
-              </div>
-            ) : (
-              <ChatMessagesView
-                messages={thread.messages}
-                isLoading={thread.isLoading}
-                scrollAreaRef={scrollAreaRef}
-                onSubmit={handleSubmit}
-                onCancel={handleCancel}
-                liveActivityEvents={processedEventsTimeline}
-                historicalActivities={historicalActivities}
-                textareaRef={textareaRef}
-              />            )}
+                />            )}
+            </div>
           </main>
         </div>
       </div>
